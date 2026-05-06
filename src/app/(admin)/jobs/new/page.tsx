@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import Script from 'next/script';
 
 export default function NewJobPage() {
   const [address, setAddress] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const [travelTime, setTravelTime] = useState<{ raw: number; rounded: number } | null>(null);
   const [loadingRouting, setLoadingRouting] = useState(false);
   const [overlapWarning, setOverlapWarning] = useState(false);
@@ -16,6 +18,23 @@ export default function NewJobPage() {
 
   // Mock previous job address for demo
   const PREVIOUS_JOB = "123 Main St, Los Angeles, CA";
+
+  const initAutocomplete = () => {
+    if (!inputRef.current || !window.google) return;
+    
+    const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+      fields: ['formatted_address', 'geometry'],
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.formatted_address) {
+        setAddress(place.formatted_address);
+      } else if (place.name) {
+        setAddress(place.name);
+      }
+    });
+  };
 
   const calculateTravel = async () => {
     if (!address) return;
@@ -50,7 +69,13 @@ export default function NewJobPage() {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900">
+    <>
+      <Script 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`} 
+        strategy="lazyOnload" 
+        onLoad={initAutocomplete} 
+      />
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900">
       {/* Form Section */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
         <div className="max-w-3xl mx-auto">
@@ -66,6 +91,7 @@ export default function NewJobPage() {
           <div className="mb-10 relative group">
             <span className="material-icons-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">location_on</span>
             <input 
+              ref={inputRef}
               type="text" 
               value={address}
               onChange={(e) => setAddress(e.target.value)}
@@ -523,5 +549,6 @@ export default function NewJobPage() {
         </div>
       </aside>
     </div>
+    </>
   );
 }
