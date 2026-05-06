@@ -15,7 +15,7 @@
   --color-warning: #F6C344;
   --color-error: #FF618F;
   --color-background-light: #fffdf2; /* Warm light yellow/white */
-  --color-background-dark: #0f172a; /* Slate 900 */
+  --color-background-dark: #fffdf2; /* Forced light mode */
   --color-neutral-soft: #f1f5f9; /* Slate 100 */
   --color-neutral-border: #e2e8f0; /* Slate 200 */
 
@@ -31,8 +31,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a; /* slate-900 */
-    --foreground: #f1f5f9; /* slate-100 */
+    --background: #fffdf2; /* Forced light mode */
+    --foreground: #1e293b; /* Forced light mode */
   }
 }
 
