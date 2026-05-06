@@ -14,8 +14,8 @@
   --color-success: #3FA673;
   --color-warning: #F6C344;
   --color-error: #FF618F;
-  --color-background-light: #fffdf2; /* Warm light yellow/white */
-  --color-background-dark: #fffdf2; /* Forced light mode */
+  --color-background-light: #fef8e0; /* Warm light yellow/cream */
+  --color-background-dark: #fef8e0; /* Forced light mode */
   --color-neutral-soft: #f1f5f9; /* Slate 100 */
   --color-neutral-border: #e2e8f0; /* Slate 200 */
 
@@ -25,13 +25,13 @@
 }
 
 :root {
-  --background: #fffdf2; /* Warm light yellow/white */
+  --background: #fef8e0; /* Warm light yellow/cream */
   --foreground: #1e293b; /* slate-800 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #fffdf2; /* Forced light mode */
+    --background: #fef8e0; /* Forced light mode */
     --foreground: #1e293b; /* Forced light mode */
   }
 }
