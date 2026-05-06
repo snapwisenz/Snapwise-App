@@ -11,17 +11,17 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#8806bc',
-          50: '#f6effa',
-          100: '#eadbfa',
-          200: '#d7bcfa',
-          300: '#c092f6',
-          400: '#a760f0',
-          500: '#9438e8',
-          600: '#8806bc', // Base
-          700: '#7513a8',
-          800: '#64158b',
-          900: '#531370',
+          DEFAULT: '#8e3e9d',
+          50: '#fcf8fd',
+          100: '#f5eef7',
+          200: '#ead9ed',
+          300: '#dab8df',
+          400: '#c58dce',
+          500: '#b061bc',
+          600: '#8e3e9d', // Base
+          700: '#763182',
+          800: '#61296a',
+          900: '#512457',
         },
         background: "var(--background)",
         foreground: "var(--foreground)",

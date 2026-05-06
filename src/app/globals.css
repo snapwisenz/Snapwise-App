@@ -10,10 +10,10 @@
 @config "../../tailwind.config.ts";
 
 @theme {
-  --color-primary: #8806BD;
-  --color-success: #3FA673;
-  --color-warning: #F6C344;
-  --color-error: #FF618F;
+  --color-primary: #8e3e9d;
+  --color-success: #47a96d;
+  --color-warning: #eba834;
+  --color-error: #ee6a41;
   --color-background-light: #fef8e0; /* Warm light yellow/cream */
   --color-background-dark: #fef8e0; /* Forced light mode */
   --color-neutral-soft: #f1f5f9; /* Slate 100 */
