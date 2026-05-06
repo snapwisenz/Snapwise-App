@@ -50,7 +50,7 @@ export default function NewJobPage() {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 -m-4 md:-m-8 h-[calc(100vh-4rem)]">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900">
       {/* Form Section */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
         <div className="max-w-3xl mx-auto">
