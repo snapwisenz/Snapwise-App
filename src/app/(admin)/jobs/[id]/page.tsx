@@ -216,6 +216,53 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
 
           {/* Right Column: Quick Notes & Sidebar */}
           <div className="lg:col-span-4 space-y-6">
+
+            {/* Requirements & Assets */}
+            <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-icons-outlined text-success">fact_check</span>
+                  <h3 className="font-bold">Requirements</h3>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                {/* Agent Meeting */}
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center mt-0.5">
+                    <input type="checkbox" className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-success checked:border-success transition-all" />
+                    <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-success transition-colors">Agent meeting at property</p>
+                    <p className="text-xs text-slate-500">Will the agent be present during the shoot?</p>
+                  </div>
+                </label>
+
+                {/* Floorplan */}
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center mt-0.5">
+                    <input type="checkbox" className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-success checked:border-success transition-all" />
+                    <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-success transition-colors">Floorplan required</p>
+                    <p className="text-xs text-slate-500">Provide floorplan to agent if package includes it</p>
+                  </div>
+                </label>
+
+                {/* Highlights */}
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center mt-0.5">
+                    <input type="checkbox" className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-success checked:border-success transition-all" />
+                    <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-success transition-colors">Capture particular highlights</p>
+                    <p className="text-xs text-slate-500">Any specific features the agent wants captured?</p>
+                  </div>
+                </label>
+              </div>
+            </div>
             
             {/* Quick Notes Staging Panel */}
             <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm h-full flex flex-col">

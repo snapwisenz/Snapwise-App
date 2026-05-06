@@ -412,14 +412,18 @@ export default function NewJobPage() {
                 <span className="material-icons-outlined text-base">home</span> 4. Access &amp; Property Details
               </h2>
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 space-y-6 shadow-sm">
-                <div className="grid grid-cols-2 gap-4">
-                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
                     <input className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" type="checkbox" />
                     <span className="text-sm font-medium">Agent will meet onsite</span>
                   </label>
-                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer">
+                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
                     <input className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" type="checkbox" defaultChecked />
                     <span className="text-sm font-medium">Vendor will meet onsite</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
+                    <input className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" type="checkbox" />
+                    <span className="text-sm font-medium">Just a section</span>
                   </label>
                 </div>
                 
