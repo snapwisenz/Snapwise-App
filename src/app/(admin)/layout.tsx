@@ -8,9 +8,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="w-[240px] bg-white dark:bg-slate-900 border-r border-neutral-border dark:border-slate-800 flex flex-col fixed h-full z-20">
         <div className="h-16 flex items-center px-6 gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-            <span className="material-icons text-xl">camera_enhance</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Snapwise Logo" className="w-8 h-8 object-contain" />
           <span className="text-xl font-bold heading-font tracking-tight text-slate-900 dark:text-white">Snapwise</span>
         </div>
         
