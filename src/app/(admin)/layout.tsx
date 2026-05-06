@@ -3,10 +3,10 @@ import { ReactNode } from 'react';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-display text-slate-800 dark:text-slate-200">
       
       {/* Sidebar */}
-      <aside className="w-[240px] bg-white dark:bg-slate-900 border-r border-neutral-border dark:border-slate-800 flex flex-col fixed h-full z-20">
+      <aside className="w-[240px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full z-20">
         <div className="h-16 flex items-center px-6 gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Snapwise Logo" className="w-8 h-8 object-contain" />
@@ -44,7 +44,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 ml-[240px]">
         
         {/* Header */}
-        <header className="h-16 bg-white dark:bg-slate-900 border-b border-neutral-border dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10">
+        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10">
           <div className="flex items-center gap-4">
           </div>
           
