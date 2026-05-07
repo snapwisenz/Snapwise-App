@@ -13,8 +13,21 @@ export default function NewJobPage() {
   // Cascading State Management
   const [selectedAgency, setSelectedAgency] = useState('');
   const [selectedAgent, setSelectedAgent] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState<{name: string, duration: number, price: string} | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<{name: string, duration: number, price: string, photos?: string} | null>(null);
   const [idealMode, setIdealMode] = useState(true); // true = Anchor slots (Ideal), false = Liquid mode
+
+  // Custom Package State
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customOptions, setCustomOptions] = useState({
+    groundPhotos: '',
+    drone: '',
+    reels: '',
+    twilight: '',
+    video: '', // '' | 'basic' | 'standard'
+    sitePlan: false,
+    floorplan: false,
+    matterport: false,
+  });
 
   // Mock previous job address for demo
   const PREVIOUS_JOB = "123 Main St, Los Angeles, CA";
@@ -215,29 +228,32 @@ export default function NewJobPage() {
                         </button>
                       )
                     })}
-                    <button className="border border-dashed border-slate-300 p-5 rounded-2xl text-center flex flex-col items-center justify-center hover:bg-slate-50 transition-all">
-                      <span className="material-icons-outlined text-slate-400 mb-1">add</span>
-                      <p className="text-xs font-bold text-slate-400 uppercase">Custom</p>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowCustomModal(true);
+                      }}
+                      className={`p-5 rounded-2xl transition-all shadow-sm border-2 ${selectedPackage?.name === 'Custom Package' ? 'border-primary bg-primary/5 ring-offset-2 text-left' : 'border-dashed border-slate-300 text-center flex flex-col items-center justify-center hover:bg-slate-50'}`}
+                    >
+                      {selectedPackage?.name === 'Custom Package' ? (
+                        <>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-primary/10 text-primary">
+                            <span className="material-icons-outlined text-xl">tune</span>
+                          </div>
+                          <p className="font-bold text-sm text-primary">Custom Package</p>
+                          <p className="text-xs text-slate-500 mt-1 line-clamp-1" title={selectedPackage.photos || 'Custom'}>2hr • {selectedPackage.photos || 'Custom'}</p>
+                          <p className="font-bold text-sm mt-3 text-primary">TBD</p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-icons-outlined text-slate-400 mb-1">add</span>
+                          <p className="text-xs font-bold text-slate-400 uppercase">Custom</p>
+                        </>
+                      )}
                     </button>
                   </div>
-                  
-                  <details className="group mt-4">
-                    <summary className="flex items-center gap-2 cursor-pointer list-none text-slate-500 hover:text-primary transition-colors text-sm font-semibold">
-                      <span className="material-icons-outlined text-lg group-open:rotate-180 transition-transform">expand_more</span> Add Custom Services
-                    </summary>
-                    <div className="mt-4 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Photos (HDR)</span>
-                          <input className="w-20 bg-white border-slate-200 rounded-xl py-2 px-3 text-sm focus:ring-primary" placeholder="Qty" type="number" />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Drone Stills</span>
-                          <input className="w-20 bg-white border-slate-200 rounded-xl py-2 px-3 text-sm focus:ring-primary" placeholder="Qty" type="number" />
-                        </div>
-                      </div>
-                    </div>
-                  </details>
+
                 </div>
               )}
             </section>
@@ -548,6 +564,146 @@ export default function NewJobPage() {
           </div>
         </div>
       </aside>
+      {/* Custom Package Modal */}
+      {showCustomModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Custom Package</h2>
+              <button type="button" onClick={() => setShowCustomModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <span className="material-icons-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Ground Photos Qty</label>
+                  <input 
+                    type="number" 
+                    value={customOptions.groundPhotos}
+                    onChange={(e) => setCustomOptions({...customOptions, groundPhotos: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                    placeholder="e.g. 25"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Drone Qty</label>
+                  <input 
+                    type="number" 
+                    value={customOptions.drone}
+                    onChange={(e) => setCustomOptions({...customOptions, drone: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                    placeholder="e.g. 5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Reels Qty</label>
+                  <input 
+                    type="number" 
+                    value={customOptions.reels}
+                    onChange={(e) => setCustomOptions({...customOptions, reels: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                    placeholder="e.g. 1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Twilight Qty</label>
+                  <input 
+                    type="number" 
+                    value={customOptions.twilight}
+                    onChange={(e) => setCustomOptions({...customOptions, twilight: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                    placeholder="e.g. 4"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Video Package</label>
+                <select 
+                  value={customOptions.video}
+                  onChange={(e) => setCustomOptions({...customOptions, video: e.target.value})}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none"
+                >
+                  <option value="">None</option>
+                  <option value="basic">Basic Video</option>
+                  <option value="standard">Standard Video</option>
+                </select>
+              </div>
+
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-slate-500 mb-3 ml-1">Add-ons</label>
+                <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={customOptions.sitePlan}
+                      onChange={(e) => setCustomOptions({...customOptions, sitePlan: e.target.checked})}
+                      className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary transition-all" 
+                    />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Site Plan</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={customOptions.floorplan}
+                      onChange={(e) => setCustomOptions({...customOptions, floorplan: e.target.checked})}
+                      className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary transition-all" 
+                    />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Floorplan</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={customOptions.matterport}
+                      onChange={(e) => setCustomOptions({...customOptions, matterport: e.target.checked})}
+                      className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary transition-all" 
+                    />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Matterport 3D Tour</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setShowCustomModal(false)}
+                  className="flex-1 px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    // Update selected package to custom
+                    let parts = [];
+                    if (customOptions.groundPhotos) parts.push(`${customOptions.groundPhotos} Photos`);
+                    if (customOptions.drone) parts.push(`${customOptions.drone} Drone`);
+                    if (customOptions.reels) parts.push(`${customOptions.reels} Reels`);
+                    if (customOptions.twilight) parts.push(`${customOptions.twilight} Twilight`);
+                    if (customOptions.video) parts.push(`${customOptions.video} Video`);
+                    if (customOptions.sitePlan) parts.push('Site Plan');
+                    if (customOptions.floorplan) parts.push('Floorplan');
+                    if (customOptions.matterport) parts.push('Matterport');
+                    
+                    setSelectedPackage({
+                      name: 'Custom Package',
+                      duration: 2, // arbitrary
+                      price: 'TBD',
+                      photos: parts.join(', ') || 'Custom Selection'
+                    });
+                    setShowCustomModal(false);
+                  }}
+                  className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all"
+                >
+                  Save Custom Package
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
