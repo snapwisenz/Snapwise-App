@@ -27,6 +27,9 @@ export default function NewJobPage() {
     sitePlan: false,
     floorplan: false,
     matterport: false,
+    virtualStaging: false,
+    virtualStagingQty: '',
+    virtualStagingNotes: '',
   });
 
   // Mock previous job address for demo
@@ -629,6 +632,8 @@ export default function NewJobPage() {
                   <option value="">None</option>
                   <option value="basic">Basic Video</option>
                   <option value="standard">Standard Video</option>
+                  <option value="premium">Premium Video</option>
+                  <option value="ai">AI Video</option>
                 </select>
               </div>
 
@@ -662,6 +667,40 @@ export default function NewJobPage() {
                     />
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Matterport 3D Tour</span>
                   </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={customOptions.virtualStaging}
+                      onChange={(e) => setCustomOptions({...customOptions, virtualStaging: e.target.checked})}
+                      className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary transition-all" 
+                    />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">Virtual Staging</span>
+                  </label>
+                  
+                  {customOptions.virtualStaging && (
+                    <div className="pl-8 pt-1 pb-1 grid grid-cols-[80px_1fr] gap-3">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-500 mb-1 ml-1">Qty</label>
+                        <input 
+                          type="number" 
+                          value={customOptions.virtualStagingQty}
+                          onChange={(e) => setCustomOptions({...customOptions, virtualStagingQty: e.target.value})}
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                          placeholder="e.g. 2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-500 mb-1 ml-1">Notes / Instructions</label>
+                        <input 
+                          type="text" 
+                          value={customOptions.virtualStagingNotes}
+                          onChange={(e) => setCustomOptions({...customOptions, virtualStagingNotes: e.target.value})}
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                          placeholder="e.g. Modern furniture"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -686,6 +725,7 @@ export default function NewJobPage() {
                     if (customOptions.sitePlan) parts.push('Site Plan');
                     if (customOptions.floorplan) parts.push('Floorplan');
                     if (customOptions.matterport) parts.push('Matterport');
+                    if (customOptions.virtualStaging) parts.push(`${customOptions.virtualStagingQty || '0'} Virtual Staging`);
                     
                     setSelectedPackage({
                       name: 'Custom Package',
