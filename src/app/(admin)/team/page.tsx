@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function TeamManagementPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -80,9 +81,9 @@ export default function TeamManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                    <Link href="/team/marcus-wright" className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
                       View
-                    </button>
+                    </Link>
                   </td>
                 </tr>
                 {/* Row 2 */}
@@ -106,9 +107,9 @@ export default function TeamManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                    <Link href="/team/sarah-miller" className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
                       View
-                    </button>
+                    </Link>
                   </td>
                 </tr>
                 {/* Row 3 */}
@@ -136,9 +137,9 @@ export default function TeamManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                    <Link href="/team/elena-rossi" className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
                       View
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               </tbody>
