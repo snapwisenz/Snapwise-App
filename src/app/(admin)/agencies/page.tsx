@@ -11,20 +11,22 @@ export default function AgenciesPage() {
   const [agents, setAgents] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
 
-  // Selection State
-  // Mode can be 'agency', 'sub_agency', or 'agent'
-  const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(null);
-  const [selectedSubAgencyId, setSelectedSubAgencyId] = useState<string | null>(null);
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  // Accordion State
+  const [expandedAgencyId, setExpandedAgencyId] = useState<string | null>(null);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [loading, setLoading] = useState(true);
 
-  // Forms State
+  // Modals State
+  const [showAgencyModal, setShowAgencyModal] = useState(false);
   const [newAgencyName, setNewAgencyName] = useState('');
-  const [newSubAgencyName, setNewSubAgencyName] = useState('');
+  const [newAgencyLocation, setNewAgencyLocation] = useState('');
 
-  // Package Form
+  // Package Modal State
   const [showPackageModal, setShowPackageModal] = useState(false);
+  const [packageContext, setPackageContext] = useState<{type: 'agency'|'agent', id: string, name: string} | null>(null);
   const [newPackage, setNewPackage] = useState({
     name: '', price: '', ground_photos_qty: 0, drone_qty: 0, video_package: ''
   });
@@ -33,10 +35,7 @@ export default function AgenciesPage() {
     try {
       setLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+      if (!session) return;
 
       const [resAgencies, resSubAgencies, resAgents, resPackages] = await Promise.all([
         supabase.from('agencies').select('*').order('created_at', { ascending: false }),
@@ -50,9 +49,6 @@ export default function AgenciesPage() {
       if (resAgents.data) setAgents(resAgents.data);
       if (resPackages.data) setPackages(resPackages.data);
       
-      if (resAgencies.error) console.error("Agencies Error:", resAgencies.error);
-      if (resPackages.error) console.error("Packages Error:", resPackages.error);
-
     } catch (err) {
       console.error("Fetch Data Error:", err);
     } finally {
@@ -70,22 +66,21 @@ export default function AgenciesPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    await supabase.from('agencies').insert([{ name: newAgencyName, user_id: session.user.id }]);
+    const { data: agencyData, error } = await supabase.from('agencies').insert([{ name: newAgencyName, user_id: session.user.id }]).select();
+    
+    if (!error && agencyData && newAgencyLocation.trim()) {
+      await supabase.from('sub_agencies').insert([{ name: newAgencyLocation, agency_id: agencyData[0].id }]);
+    }
+    
     setNewAgencyName('');
-    fetchData();
-  };
-
-  const handleAddSubAgency = async (e: React.FormEvent, parentAgencyId: string) => {
-    e.preventDefault();
-    if (!newSubAgencyName.trim()) return;
-    await supabase.from('sub_agencies').insert([{ name: newSubAgencyName, agency_id: parentAgencyId }]);
-    setNewSubAgencyName('');
+    setNewAgencyLocation('');
+    setShowAgencyModal(false);
     fetchData();
   };
 
   const handleAddPackage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPackage.name.trim() || !newPackage.price) return;
+    if (!newPackage.name.trim() || !newPackage.price || !packageContext) return;
 
     const payload: any = {
       name: newPackage.name,
@@ -95,16 +90,13 @@ export default function AgenciesPage() {
       video_package: newPackage.video_package
     };
 
-    if (selectedAgentId) {
-      payload.agent_id = selectedAgentId;
-    } else if (selectedAgencyId) {
-      payload.agency_id = selectedAgencyId;
+    if (packageContext.type === 'agent') {
+      payload.agent_id = packageContext.id;
     } else {
-      return; // Need either agent or agency selected
+      payload.agency_id = packageContext.id;
     }
 
     await supabase.from('packages').insert([payload]);
-    setShowPackageModal(false);
     setNewPackage({ name: '', price: '', ground_photos_qty: 0, drone_qty: 0, video_package: '' });
     fetchData();
   };
@@ -115,203 +107,249 @@ export default function AgenciesPage() {
     fetchData();
   };
 
-  if (loading) return <div className="p-8 text-slate-500">Loading Agencies...</div>;
+  if (loading) return <div className="flex-1 flex justify-center items-center h-full"><div className="p-8 text-slate-500">Loading Agencies...</div></div>;
 
-  const currentAgents = agents.filter(a => a.sub_agency_id === selectedSubAgencyId);
-  
-  // Determine which packages to show
-  let displayedPackages: any[] = [];
-  let packageContext = '';
-  
-  if (selectedAgentId) {
-    displayedPackages = packages.filter(p => p.agent_id === selectedAgentId);
-    packageContext = 'Agent';
-  } else if (selectedAgencyId) {
-    displayedPackages = packages.filter(p => p.agency_id === selectedAgencyId);
-    packageContext = 'Agency';
-  }
+  const filteredAgencies = agencies.filter(ag => ag.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-slate-900 custom-scrollbar h-[calc(100vh-4rem)]">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Agencies & Agents</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage your agencies, locations, agents, and custom packages.</p>
+      <div className="max-w-5xl mx-auto space-y-6">
+        
+        {/* Top Controls */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div className="relative w-full md:w-96">
+            <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <input 
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400" 
+              placeholder="Search agencies..." 
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/agencies/new-agent" className="px-4 py-2.5 text-primary font-bold rounded-xl border border-primary/20 hover:bg-primary/5 transition-colors text-sm">
+              + New Agent
+            </Link>
+            <button onClick={() => setShowAgencyModal(true)} className="px-4 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all text-sm">
+              + New Agency
+            </button>
+          </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 h-[700px] flex flex-col md:flex-row gap-6">
-          
-          {/* COLUMN 1: AGENCIES & LOCATIONS */}
-          <div className="flex-1 border-r border-slate-100 dark:border-slate-700 pr-6 flex flex-col">
-            <h2 className="font-bold text-slate-800 dark:text-white mb-4">Agencies</h2>
-            <form onSubmit={handleAddAgency} className="mb-4 flex gap-2">
-              <input type="text" placeholder="New Agency (e.g. Ray White)" value={newAgencyName} onChange={e => setNewAgencyName(e.target.value)} className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-primary" />
-              <button type="submit" className="bg-primary text-white px-3 rounded-lg text-sm font-bold">+</button>
-            </form>
-            <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-2">
-              {agencies.map(ag => (
-                <div key={ag.id} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                  <div 
-                    onClick={() => { setSelectedAgencyId(ag.id); setSelectedSubAgencyId(null); setSelectedAgentId(null); }} 
-                    className={`p-3 cursor-pointer flex justify-between items-center transition-colors ${selectedAgencyId === ag.id && !selectedSubAgencyId ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-                  >
-                    <span className="font-bold text-sm">{ag.name}</span>
-                    <span className="text-[10px] uppercase font-bold px-2 py-1 bg-black/10 rounded-full">Agency</span>
+        {/* Agencies List */}
+        <div className="space-y-4">
+          {filteredAgencies.map(agency => {
+            const isExpanded = expandedAgencyId === agency.id;
+            const agencyLocations = subAgencies.filter(s => s.agency_id === agency.id);
+            const locationNames = agencyLocations.map(l => l.name).join(', ') || 'Headquarters';
+            
+            // Get all agents that belong to any sub_agency of this agency
+            const agencyAgents = agents.filter(agent => {
+              const sub = subAgencies.find(s => s.id === agent.sub_agency_id);
+              return sub?.agency_id === agency.id;
+            });
+
+            return (
+              <div key={agency.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {/* Agency Card Header */}
+                <div 
+                  className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  onClick={() => setExpandedAgencyId(isExpanded ? null : agency.id)}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className={`material-icons-outlined text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                      chevron_right
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{agency.name}</h3>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold rounded-full uppercase tracking-widest">
+                          {agencyAgents.length} Agents
+                        </span>
+                        <span className="text-xs text-slate-500">{locationNames}</span>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="bg-white dark:bg-slate-800 p-2 space-y-1">
-                    {subAgencies.filter(s => s.agency_id === ag.id).map(sub => (
-                      <div 
-                        key={sub.id} 
-                        onClick={() => { setSelectedAgencyId(ag.id); setSelectedSubAgencyId(sub.id); setSelectedAgentId(null); }}
-                        className={`p-2 text-sm rounded-lg cursor-pointer transition-colors ml-4 flex items-center gap-2 ${selectedSubAgencyId === sub.id ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400'}`}
-                      >
-                        <span className="material-icons-outlined text-sm">location_on</span>
-                        {sub.name}
-                      </div>
-                    ))}
-                    
-                    {/* Add Sub-Agency Form */}
-                    <form onSubmit={(e) => handleAddSubAgency(e, ag.id)} className="ml-4 mt-2 flex gap-2">
-                      <input type="text" placeholder="New Location..." value={selectedAgencyId === ag.id ? newSubAgencyName : ''} onChange={e => setNewSubAgencyName(e.target.value)} onFocus={() => {setSelectedAgencyId(ag.id); setSelectedSubAgencyId(null);}} className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1.5 text-xs focus:outline-primary" />
-                      <button type="submit" className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 rounded-md text-xs font-bold">+</button>
-                    </form>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setPackageContext({type: 'agency', id: agency.id, name: agency.name}); setShowPackageModal(true); }}
+                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-full transition-colors flex items-center justify-center"
+                      title="Manage Agency Packages"
+                    >
+                      <span className="material-icons-outlined text-sm">inventory_2</span>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); /* Optional: Agency edit/delete */ }} 
+                      className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                    >
+                      <span className="material-icons-outlined">more_vert</span>
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* COLUMN 2: AGENTS */}
-          <div className="flex-1 border-r border-slate-100 dark:border-slate-700 pr-6 flex flex-col">
-            <h2 className="font-bold text-slate-800 dark:text-white mb-4">Agents</h2>
-            {selectedSubAgencyId ? (
-              <>
-                <div className="mb-4 text-xs font-bold text-primary bg-primary/10 p-2 rounded-lg inline-block w-fit">
-                  Location: {subAgencies.find(s => s.id === selectedSubAgencyId)?.name}
-                </div>
-                
-                <Link 
-                  href={`/agencies/new-agent?locationId=${selectedSubAgencyId}`}
-                  className="mb-4 w-full border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-primary hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors flex items-center justify-center gap-2"
-                >
-                  <span className="material-icons text-sm">person_add</span> Add New Agent
-                </Link>
-
-                <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
-                  {currentAgents.map(agent => (
-                    <div key={agent.id} onClick={() => setSelectedAgentId(agent.id)} className={`p-3 rounded-xl cursor-pointer transition-colors border ${selectedAgentId === agent.id ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300'}`}>
-                      {agent.name}
-                    </div>
-                  ))}
-                  {currentAgents.length === 0 && <p className="text-sm text-slate-400">No agents yet.</p>}
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-center">
-                <p className="text-sm text-slate-400">Select a Location (Sub-Agency) on the left to view and add Agents.</p>
+                {/* Expanded Content */}
+                {isExpanded && (
+                  <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-slate-50 dark:bg-slate-800/50">
+                        <tr>
+                          <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider pl-14">Agent Name</th>
+                          <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Location</th>
+                          <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
+                          <th className="px-6 py-3 w-28"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                        {agencyAgents.map(agent => {
+                          const initials = agent.name ? agent.name.split(' ').map((n:string)=>n[0]).join('').substring(0,2).toUpperCase() : '??';
+                          const locationName = subAgencies.find(s => s.id === agent.sub_agency_id)?.name || 'Unknown';
+                          
+                          return (
+                            <tr key={agent.id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <td className="px-6 py-4 pl-14">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                                    {initials}
+                                  </div>
+                                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{agent.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-slate-500">{locationName}</td>
+                              <td className="px-6 py-4 text-sm text-slate-500">
+                                <div className="flex flex-col">
+                                  <span>{agent.phone || 'No phone'}</span>
+                                  <span className="text-xs text-slate-400">{agent.email || 'No email'}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="opacity-0 group-hover:opacity-100 flex items-center justify-end gap-1 transition-opacity">
+                                  <button 
+                                    onClick={() => { setPackageContext({type: 'agent', id: agent.id, name: agent.name}); setShowPackageModal(true); }}
+                                    className="p-1.5 text-slate-400 hover:text-primary rounded-lg"
+                                    title="Manage Agent Packages"
+                                  >
+                                    <span className="material-icons-outlined text-lg">inventory_2</span>
+                                  </button>
+                                  <Link href={`/agencies/edit-agent/${agent.id}`} className="p-1.5 text-slate-400 hover:text-secondary rounded-lg">
+                                    <span className="material-icons-outlined text-lg">edit</span>
+                                  </Link>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {agencyAgents.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500">
+                              No agents found for this agency.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* COLUMN 3: PACKAGES */}
-          <div className="flex-[1.5] flex flex-col">
-            <h2 className="font-bold text-slate-800 dark:text-white mb-4">
-              {packageContext ? `${packageContext} Packages` : 'Packages'}
-            </h2>
-            
-            {(selectedAgencyId && !selectedSubAgencyId) || selectedAgentId ? (
-              <>
-                <div className="mb-4 text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg">
-                  Applying to: <span className="text-slate-800 dark:text-white">
-                    {selectedAgentId 
-                      ? agents.find(a => a.id === selectedAgentId)?.name 
-                      : agencies.find(a => a.id === selectedAgencyId)?.name + " (All Locations & Agents)"}
-                  </span>
-                </div>
-                
-                <button onClick={() => setShowPackageModal(true)} className="mb-4 w-full border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-primary hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors flex items-center justify-center gap-2">
-                  <span className="material-icons-outlined text-sm">add</span> Add {packageContext} Package
-                </button>
-                <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
-                  {displayedPackages.map(pkg => (
-                    <div key={pkg.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-slate-50 dark:bg-slate-900 relative group">
-                      <button onClick={() => handleDeletePackage(pkg.id)} className="absolute top-4 right-4 text-slate-400 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="material-icons-outlined text-sm">delete</span>
-                      </button>
-                      <div className="flex justify-between items-start mb-2 pr-6">
-                        <h3 className="font-bold text-slate-800 dark:text-white">{pkg.name}</h3>
-                        <span className="font-bold text-primary">${pkg.price}</span>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        {pkg.ground_photos_qty} Photos, {pkg.drone_qty} Drone {pkg.video_package ? `, ${pkg.video_package} Video` : ''}
-                      </p>
-                    </div>
-                  ))}
-                  {displayedPackages.length === 0 && <p className="text-sm text-slate-400 text-center mt-4">No custom packages created.</p>}
-                </div>
-              </>
-            ) : selectedSubAgencyId ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-4 space-y-4">
-                <span className="material-icons-outlined text-4xl text-slate-300">inventory_2</span>
-                <p className="text-sm text-slate-500">
-                  You are viewing a Location. <br/>
-                  To add a package for <b>ALL</b> agents at {agencies.find(a=>a.id===selectedAgencyId)?.name}, select the top-level Agency on the left.<br/>
-                  To add a package for a <b>SPECIFIC</b> agent, select an Agent in the middle column.
-                </p>
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-center">
-                <p className="text-sm text-slate-400">Select an Agency or an Agent to view and manage packages.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Add Package Modal */}
-          {showPackageModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800">
-                <h2 className="text-xl font-bold mb-1 text-slate-900 dark:text-white">New {packageContext} Package</h2>
-                <p className="text-xs text-slate-500 mb-4">Will apply to: {selectedAgentId ? agents.find(a => a.id === selectedAgentId)?.name : agencies.find(a => a.id === selectedAgencyId)?.name}</p>
-                <form onSubmit={handleAddPackage} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Package Name</label>
-                    <input type="text" value={newPackage.name} onChange={e => setNewPackage({...newPackage, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" required placeholder="e.g. Premium Deal" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Flat Price ($)</label>
-                    <input type="number" value={newPackage.price} onChange={e => setNewPackage({...newPackage, price: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" required placeholder="199" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-1">Photos Qty</label>
-                      <input type="number" value={newPackage.ground_photos_qty} onChange={e => setNewPackage({...newPackage, ground_photos_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-500 mb-1">Drone Qty</label>
-                      <input type="number" value={newPackage.drone_qty} onChange={e => setNewPackage({...newPackage, drone_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Video Included</label>
-                    <select value={newPackage.video_package} onChange={e => setNewPackage({...newPackage, video_package: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2">
-                      <option value="">None</option>
-                      <option value="basic">Basic Video</option>
-                      <option value="standard">Standard Video</option>
-                      <option value="premium">Premium Video</option>
-                      <option value="ai">AI Video</option>
-                    </select>
-                  </div>
-                  <div className="pt-4 flex gap-3">
-                    <button type="button" onClick={() => setShowPackageModal(false)} className="flex-1 px-4 py-2 border border-slate-200 rounded-xl font-bold text-slate-600">Cancel</button>
-                    <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-xl font-bold">Save Package</button>
-                  </div>
-                </form>
-              </div>
+            );
+          })}
+          {filteredAgencies.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              No agencies found. Try creating a new one.
             </div>
           )}
-
         </div>
+
+        {/* Add Agency Modal */}
+        {showAgencyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800">
+              <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">New Agency</h2>
+              <form onSubmit={handleAddAgency} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Agency Name</label>
+                  <input type="text" value={newAgencyName} onChange={e => setNewAgencyName(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" required placeholder="e.g. Ray White" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Primary Location / Branch</label>
+                  <input type="text" value={newAgencyLocation} onChange={e => setNewAgencyLocation(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" placeholder="e.g. Nelson, NZ" />
+                </div>
+                <div className="pt-4 flex gap-3">
+                  <button type="button" onClick={() => setShowAgencyModal(false)} className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300">Cancel</button>
+                  <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-xl font-bold">Create Agency</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Package Modal */}
+        {showPackageModal && packageContext && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col">
+              <div className="flex-shrink-0">
+                <h2 className="text-xl font-bold mb-1 text-slate-900 dark:text-white">Add Custom Package</h2>
+                <p className="text-xs text-slate-500 mb-4">Will apply to: <span className="font-bold">{packageContext.name}</span></p>
+              </div>
+              
+              {/* List existing packages for this context */}
+              <div className="mb-6 space-y-2 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-40">
+                <h3 className="text-xs font-bold text-slate-500 uppercase sticky top-0 bg-white dark:bg-slate-900 pb-1 z-10">Existing Packages</h3>
+                {packages.filter(p => packageContext.type === 'agent' ? p.agent_id === packageContext.id : p.agency_id === packageContext.id).map(pkg => (
+                  <div key={pkg.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                    <div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{pkg.name}</div>
+                      <div className="text-xs text-slate-500">${pkg.price} • {pkg.ground_photos_qty || 0} photos</div>
+                    </div>
+                    <button onClick={() => handleDeletePackage(pkg.id)} className="text-slate-400 hover:text-error">
+                      <span className="material-icons-outlined text-sm">delete</span>
+                    </button>
+                  </div>
+                ))}
+                {packages.filter(p => packageContext.type === 'agent' ? p.agent_id === packageContext.id : p.agency_id === packageContext.id).length === 0 && (
+                  <div className="text-xs text-slate-400 italic">No custom packages yet.</div>
+                )}
+              </div>
+
+              <form onSubmit={handleAddPackage} className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4 flex-shrink-0">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Package Name</label>
+                  <input type="text" value={newPackage.name} onChange={e => setNewPackage({...newPackage, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" required placeholder="e.g. Premium Deal" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Flat Price ($)</label>
+                  <input type="number" value={newPackage.price} onChange={e => setNewPackage({...newPackage, price: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" required placeholder="199" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Photos Qty</label>
+                    <input type="number" value={newPackage.ground_photos_qty} onChange={e => setNewPackage({...newPackage, ground_photos_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Drone Qty</label>
+                    <input type="number" value={newPackage.drone_qty} onChange={e => setNewPackage({...newPackage, drone_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Video Included</label>
+                  <select value={newPackage.video_package} onChange={e => setNewPackage({...newPackage, video_package: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm">
+                    <option value="">None</option>
+                    <option value="basic">Basic Video</option>
+                    <option value="standard">Standard Video</option>
+                    <option value="premium">Premium Video</option>
+                    <option value="ai">AI Video</option>
+                  </select>
+                </div>
+                <div className="pt-4 flex gap-3">
+                  <button type="button" onClick={() => setShowPackageModal(false)} className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 text-sm">Close</button>
+                  <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm">Save Package</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
