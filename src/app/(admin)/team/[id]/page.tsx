@@ -295,7 +295,7 @@ export default function PhotographerProfilePage() {
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Base Address (Map Autocomplete)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Base Address</label>
                 <div className="relative">
                   <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
                   <input 
