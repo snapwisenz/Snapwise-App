@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -17,6 +18,7 @@ export default function PhotographerProfilePage() {
     role: 'photographer',
     email: '',
     phone: '',
+    address: '',
     region: '',
     equipment: '',
     internal_pay_rate: '',
@@ -24,6 +26,23 @@ export default function PhotographerProfilePage() {
     deliverable_products: [] as string[],
     status: 'Active'
   });
+
+  const addressInputRef = useRef<HTMLInputElement>(null);
+
+  const initAutocomplete = () => {
+    if (!addressInputRef.current || !window.google) return;
+    
+    const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+      fields: ['formatted_address', 'geometry'],
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.formatted_address) {
+        setPhotographer(prev => ({ ...prev, address: place.formatted_address || '' }));
+      }
+    });
+  };
 
   const fetchPhotographer = useCallback(async () => {
     try {
@@ -45,6 +64,7 @@ export default function PhotographerProfilePage() {
             role: data.role || 'photographer',
             email: data.email || '',
             phone: data.phone || '',
+            address: data.address || '',
             region: data.region || '',
             equipment: data.equipment || '',
             internal_pay_rate: data.internal_pay_rate?.toString() || '',
@@ -61,6 +81,7 @@ export default function PhotographerProfilePage() {
             role: 'Lead Photographer',
             email: 'm.wright@snapwise.co',
             phone: '+64 21 000 0000',
+            address: '124 Collingwood St, Nelson',
             region: 'Nelson, Tasman',
             equipment: 'Sony A7R IV, 16-35mm GM, DJI Mavic 3 Pro, Matterport Pro 2',
             internal_pay_rate: '85.00',
@@ -72,6 +93,7 @@ export default function PhotographerProfilePage() {
             role: 'Contractor',
             email: 'sarah.m@gmail.com',
             phone: '+64 27 111 2222',
+            address: '45 Beach Rd, Tahunanui',
             region: 'Auckland',
             equipment: 'Canon R5, RF 15-35mm',
             internal_pay_rate: '65.00',
@@ -83,6 +105,7 @@ export default function PhotographerProfilePage() {
             role: 'Senior Associate',
             email: 'elena.r@snapwise.co',
             phone: '+64 22 333 4444',
+            address: '89 Hill St, Richmond',
             region: 'Richmond',
             equipment: 'Sony A7S III, Ronin S2, Mavic 3',
             internal_pay_rate: '95.00',
@@ -119,6 +142,7 @@ export default function PhotographerProfilePage() {
             full_name: photographer.full_name,
             email: photographer.email,
             phone: photographer.phone,
+            address: photographer.address,
             region: photographer.region,
             equipment: photographer.equipment,
             internal_pay_rate: photographer.internal_pay_rate ? parseFloat(photographer.internal_pay_rate) : null,
@@ -184,7 +208,13 @@ export default function PhotographerProfilePage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-8 animate-in fade-in duration-500">
+    <>
+      <Script 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`} 
+        strategy="lazyOnload" 
+        onLoad={initAutocomplete} 
+      />
+      <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-8 animate-in fade-in duration-500">
       {/* Header & Navigation */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-6">
@@ -263,6 +293,21 @@ export default function PhotographerProfilePage() {
                   onChange={(e) => setPhotographer({...photographer, phone: e.target.value})}
                   className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                 />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Base Address (Map Autocomplete)</label>
+                <div className="relative">
+                  <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
+                  <input 
+                    ref={addressInputRef}
+                    type="text" 
+                    value={photographer.address}
+                    onChange={(e) => setPhotographer({...photographer, address: e.target.value})}
+                    placeholder="Enter home or base address..."
+                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 italic mt-1 ml-1">Used for distance calculations and automated scheduling.</p>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Service Regions</label>
@@ -419,5 +464,6 @@ export default function PhotographerProfilePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
