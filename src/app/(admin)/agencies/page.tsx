@@ -82,6 +82,7 @@ export default function AgenciesPage() {
       router.push(`/agencies/${agencyData[0].id}`);
     } else {
       console.error("Error creating agency:", error);
+      alert("Error creating agency: " + (error?.message || "Unknown error"));
       fetchData();
     }
   };
