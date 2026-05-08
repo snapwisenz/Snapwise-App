@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 
 export default function AgenciesPage() {
@@ -21,8 +22,7 @@ export default function AgenciesPage() {
   // Forms State
   const [newAgencyName, setNewAgencyName] = useState('');
   const [newSubAgencyName, setNewSubAgencyName] = useState('');
-  const [newAgentName, setNewAgentName] = useState('');
-  
+
   // Package Form
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [newPackage, setNewPackage] = useState({
@@ -80,14 +80,6 @@ export default function AgenciesPage() {
     if (!newSubAgencyName.trim()) return;
     await supabase.from('sub_agencies').insert([{ name: newSubAgencyName, agency_id: parentAgencyId }]);
     setNewSubAgencyName('');
-    fetchData();
-  };
-
-  const handleAddAgent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAgentName.trim() || !selectedSubAgencyId) return;
-    await supabase.from('agents').insert([{ name: newAgentName, sub_agency_id: selectedSubAgencyId }]);
-    setNewAgentName('');
     fetchData();
   };
 
@@ -198,10 +190,14 @@ export default function AgenciesPage() {
                 <div className="mb-4 text-xs font-bold text-primary bg-primary/10 p-2 rounded-lg inline-block w-fit">
                   Location: {subAgencies.find(s => s.id === selectedSubAgencyId)?.name}
                 </div>
-                <form onSubmit={handleAddAgent} className="mb-4 flex gap-2">
-                  <input type="text" placeholder="New Agent Name..." value={newAgentName} onChange={e => setNewAgentName(e.target.value)} className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-primary" />
-                  <button type="submit" className="bg-primary text-white px-3 rounded-lg text-sm font-bold">+</button>
-                </form>
+                
+                <Link 
+                  href={`/agencies/new-agent?locationId=${selectedSubAgencyId}`}
+                  className="mb-4 w-full border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-primary hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-icons text-sm">person_add</span> Add New Agent
+                </Link>
+
                 <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
                   {currentAgents.map(agent => (
                     <div key={agent.id} onClick={() => setSelectedAgentId(agent.id)} className={`p-3 rounded-xl cursor-pointer transition-colors border ${selectedAgentId === agent.id ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300'}`}>
