@@ -80,8 +80,8 @@ export default function TeamManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-                      <span className="material-symbols-outlined">more_vert</span>
+                    <button className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                      View
                     </button>
                   </td>
                 </tr>
@@ -106,8 +106,8 @@ export default function TeamManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-                      <span className="material-symbols-outlined">more_vert</span>
+                    <button className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                      View
                     </button>
                   </td>
                 </tr>
@@ -136,8 +136,8 @@ export default function TeamManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-                      <span className="material-symbols-outlined">more_vert</span>
+                    <button className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                      View
                     </button>
                   </td>
                 </tr>
@@ -183,6 +183,21 @@ export default function TeamManagementPage() {
                       <label className="font-bold text-slate-500 text-xs uppercase tracking-wider">Email Address</label>
                       <input className="w-full border border-slate-200 dark:border-slate-800 rounded-lg p-3 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm" placeholder="julian@agency.com" type="email" />
                       <p className="text-[11px] text-slate-400 italic leading-relaxed">They will configure their Service Areas and profile via the invite link.</p>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                      <div className="flex justify-between items-center">
+                        <label className="font-bold text-slate-500 text-xs uppercase tracking-wider">Internal Pay Rate</label>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[10px]">visibility_off</span>
+                          Admin Only
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                        <input className="w-full border border-slate-200 dark:border-slate-800 rounded-lg p-3 pl-7 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm" placeholder="0.00" type="number" step="0.01" min="0" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 italic leading-relaxed">This rate is hidden from the photographer and used only for internal profit calculations.</p>
                     </div>
                     <div className="pt-6">
                       <div className="p-4 rounded-xl bg-success/10 border border-success/20 flex gap-3">
