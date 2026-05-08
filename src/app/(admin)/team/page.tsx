@@ -1,10 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 export default function TeamManagementPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [photographers, setPhotographers] = useState<any[]>([]);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchPhotographers() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'photographer');
+        
+        if (error) throw error;
+        
+        // Combine with mock data if none found to keep the demo looking good
+        const displayData = data && data.length > 0 ? data : [
+          {
+            id: 'marcus-wright',
+            full_name: 'Marcus Wright',
+            role: 'Lead Photographer',
+            email: 'm.wright@snapwise.co',
+            region: 'Nelson, Tasman',
+            status: 'Active'
+          },
+          {
+            id: 'sarah-miller',
+            full_name: 'Sarah Miller',
+            role: 'Contractor',
+            email: 'sarah.m@gmail.com',
+            region: 'Awaiting Setup',
+            status: 'Pending Invite'
+          },
+          {
+            id: 'elena-rossi',
+            full_name: 'Elena Rossi',
+            role: 'Senior Associate',
+            email: 'elena.r@snapwise.co',
+            region: 'Richmond',
+            status: 'Active'
+          }
+        ];
+        
+        setPhotographers(displayData);
+      } catch (error) {
+        console.error('Error fetching photographers:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPhotographers();
+  }, [supabase]);
 
   return (
     <>
@@ -27,7 +81,7 @@ export default function TeamManagementPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="col-span-1 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Total Team</p>
-            <h3 className="text-4xl font-bold text-slate-900 dark:text-white mt-1">24</h3>
+            <h3 className="text-4xl font-bold text-slate-900 dark:text-white mt-1">{photographers.length}</h3>
           </div>
           
           <div className="col-span-1 md:col-span-3 bg-primary/10 dark:bg-primary/5 p-6 rounded-xl border border-primary/20 flex items-center justify-between overflow-hidden relative">
@@ -55,93 +109,52 @@ export default function TeamManagementPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                {/* Row 1 */}
-                <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpa8eGF6S3R1CtgQ9qCbUy2gd5Fh9ZuytiVvEEZ5TbEpQCQ6YvRw9NxD8teHcWiGDAhQiepdB9cCjNIf4CJW56NHmRhUR4Fz7hr_zpV05aKec6Hf8IjjxAVp6SpZEhhy0YgHR0DXsW7QXlCjJIqlp4Rct9O4rTMZA9dQABJSYOMd0FJyMzYkbepmwWUSGpuSN88r4dKmVh6M1Ho6gLdrIBOwOAyePv0BEsbv3mdn1snvQx_TfCXqVBO9NUvYZAA9LZkYRyDG-UcSE" alt="Marcus Wright" className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800" />
-                      <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">Marcus Wright</div>
-                        <div className="text-xs text-slate-500">Lead Photographer</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">m.wright@snapwise.co</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">Nelson</span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">Tasman</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/20 text-success-700 dark:text-success text-[11px] font-extrabold uppercase">
-                      <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
-                      Active
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href="/team/marcus-wright" className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-                {/* Row 2 */}
-                <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-warning/20 text-warning-700 dark:text-warning flex items-center justify-center font-bold">SM</div>
-                      <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">Sarah Miller</div>
-                        <div className="text-xs text-slate-500">Contractor</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">sarah.m@gmail.com</td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs italic text-slate-400">Awaiting Setup</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning/20 text-warning-700 dark:text-warning text-[11px] font-extrabold uppercase">
-                      Pending Invite
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href="/team/sarah-miller" className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
-                      View
-                    </Link>
-                  </td>
-                </tr>
-                {/* Row 3 */}
-                <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi_LuyYAl24NHjdtgc7CTXE91tiYPPl1O0euJx8KI9rBKBm5Uyt3CAO35BakcsZyRqlTRVUH60v4ktLuxSnPDG3zFeIV5Ucn8wAzqsLutXsJh9Q8Q2tAEHOpEmCztVj6XNpwjQ-EExP0JZuOubD7Cz_JxCWnv18fYCeUQaqwEfsjur3S_6p310Ai1kwXqFwP-5I9DrXdX80X5liJvZYGhIAKwDQBMHkjH_gPLBZEAhhoQs02oLzGDP7vA-F7PvQoSO3Uc1SsA9OUY" alt="Elena Rossi" className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100 dark:ring-slate-800" />
-                      <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">Elena Rossi</div>
-                        <div className="text-xs text-slate-500">Senior Associate</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">elena.r@snapwise.co</td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">Richmond</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/20 text-success-700 dark:text-success text-[11px] font-extrabold uppercase">
-                      <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
-                      Active
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Link href="/team/elena-rossi" className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
-                      View
-                    </Link>
-                  </td>
-                </tr>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">
+                      Loading photographers...
+                    </td>
+                  </tr>
+                ) : (
+                  photographers.map((p) => (
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                            {p.full_name ? p.full_name.split(' ').map((n:any) => n[0]).join('') : '??'}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-slate-100">{p.full_name}</div>
+                            <div className="text-xs text-slate-500">{p.role}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{p.email}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {p.region ? p.region.split(',').map((r: string) => (
+                            <span key={r} className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                              {r.trim()}
+                            </span>
+                          )) : <span className="text-xs italic text-slate-400">None</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase ${
+                          p.status === 'Active' ? 'bg-success/20 text-success-700 dark:text-success' : 'bg-warning/20 text-warning-700 dark:text-warning'
+                        }`}>
+                          {p.status === 'Active' && <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>}
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link href={`/team/${p.id}`} className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

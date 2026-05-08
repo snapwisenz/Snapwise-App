@@ -1,25 +1,144 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function PhotographerProfilePage() {
   const { id } = useParams();
+  const router = useRouter();
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
-  // Mock data - in a real app, this would be fetched based on {id}
   const [photographer, setPhotographer] = useState({
-    name: id === 'marcus-wright' ? 'Marcus Wright' : id === 'sarah-miller' ? 'Sarah Miller' : 'Elena Rossi',
-    role: id === 'sarah-miller' ? 'Contractor' : id === 'marcus-wright' ? 'Lead Photographer' : 'Senior Associate',
-    email: id === 'marcus-wright' ? 'm.wright@snapwise.co' : id === 'sarah-miller' ? 'sarah.m@gmail.com' : 'elena.r@snapwise.co',
-    phone: '+64 21 000 0000',
-    region: id === 'marcus-wright' ? 'Nelson, Tasman' : id === 'elena-rossi' ? 'Richmond' : 'Auckland',
-    equipment: 'Sony A7R IV, 16-35mm GM, DJI Mavic 3 Pro, Matterport Pro 2',
-    internal_pay_rate: '85.00',
-    notes: 'Very reliable, specializes in high-end architectural shoots.',
-    deliverables: ['ground_photos', 'drone', 'matterport', 'video'],
+    full_name: '',
+    role: 'photographer',
+    email: '',
+    phone: '',
+    region: '',
+    equipment: '',
+    internal_pay_rate: '',
+    internal_notes: '',
+    deliverable_products: [] as string[],
     status: 'Active'
   });
+
+  const fetchPhotographer = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Check if it's a UUID (real data) or a mock slug
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id as string);
+      
+      if (isUUID) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        if (data) {
+          setPhotographer({
+            full_name: data.full_name || '',
+            role: data.role || 'photographer',
+            email: data.email || '',
+            phone: data.phone || '',
+            region: data.region || '',
+            equipment: data.equipment || '',
+            internal_pay_rate: data.internal_pay_rate?.toString() || '',
+            internal_notes: data.internal_notes || '',
+            deliverable_products: Array.isArray(data.deliverable_products) ? data.deliverable_products : [],
+            status: 'Active'
+          });
+        }
+      } else {
+        // Mock data fallback for the demo slugs
+        const mockData: Record<string, any> = {
+          'marcus-wright': {
+            full_name: 'Marcus Wright',
+            role: 'Lead Photographer',
+            email: 'm.wright@snapwise.co',
+            phone: '+64 21 000 0000',
+            region: 'Nelson, Tasman',
+            equipment: 'Sony A7R IV, 16-35mm GM, DJI Mavic 3 Pro, Matterport Pro 2',
+            internal_pay_rate: '85.00',
+            internal_notes: 'Very reliable, specializes in high-end architectural shoots.',
+            deliverable_products: ['ground_photos', 'drone', 'matterport', 'video'],
+          },
+          'sarah-miller': {
+            full_name: 'Sarah Miller',
+            role: 'Contractor',
+            email: 'sarah.m@gmail.com',
+            phone: '+64 27 111 2222',
+            region: 'Auckland',
+            equipment: 'Canon R5, RF 15-35mm',
+            internal_pay_rate: '65.00',
+            internal_notes: 'New contractor, awaiting onboarding completion.',
+            deliverable_products: ['ground_photos'],
+          },
+          'elena-rossi': {
+            full_name: 'Elena Rossi',
+            role: 'Senior Associate',
+            email: 'elena.r@snapwise.co',
+            phone: '+64 22 333 4444',
+            region: 'Richmond',
+            equipment: 'Sony A7S III, Ronin S2, Mavic 3',
+            internal_pay_rate: '95.00',
+            internal_notes: 'Expert in video and twilight shots.',
+            deliverable_products: ['ground_photos', 'drone', 'reels', 'video', 'twilight'],
+          }
+        };
+
+        const data = mockData[id as string];
+        if (data) {
+          setPhotographer(prev => ({ ...prev, ...data }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching photographer:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, supabase]);
+
+  useEffect(() => {
+    fetchPhotographer();
+  }, [fetchPhotographer]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id as string);
+      
+      if (isUUID) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: photographer.full_name,
+            email: photographer.email,
+            phone: photographer.phone,
+            region: photographer.region,
+            equipment: photographer.equipment,
+            internal_pay_rate: photographer.internal_pay_rate ? parseFloat(photographer.internal_pay_rate) : null,
+            internal_notes: photographer.internal_notes,
+            deliverable_products: photographer.deliverable_products
+          })
+          .eq('id', id);
+
+        if (error) throw error;
+        alert('Changes saved successfully!');
+      } else {
+        alert('This is a demo profile. Real saving is only enabled for authenticated database records (UUIDs).');
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('Failed to save changes. Please check console for details.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const allProducts = [
     { id: 'ground_photos', label: 'Ground Photos', icon: 'photo_camera' },
@@ -40,18 +159,29 @@ export default function PhotographerProfilePage() {
   ];
 
   const toggleDeliverable = (productId: string) => {
-    if (photographer.deliverables.includes(productId)) {
+    if (photographer.deliverable_products.includes(productId)) {
       setPhotographer({
         ...photographer,
-        deliverables: photographer.deliverables.filter(d => d !== productId)
+        deliverable_products: photographer.deliverable_products.filter(d => d !== productId)
       });
     } else {
       setPhotographer({
         ...photographer,
-        deliverables: [...photographer.deliverables, productId]
+        deliverable_products: [...photographer.deliverable_products, productId]
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Loading Profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-8 animate-in fade-in duration-500">
@@ -66,10 +196,15 @@ export default function PhotographerProfilePage() {
           </Link>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl border border-primary/20 overflow-hidden">
-               {photographer.name.split(' ').map(n => n[0]).join('')}
+               {photographer.full_name ? photographer.full_name.split(' ').map(n => n[0]).join('') : '??'}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{photographer.name}</h1>
+              <input 
+                type="text"
+                value={photographer.full_name}
+                onChange={(e) => setPhotographer({...photographer, full_name: e.target.value})}
+                className="text-3xl font-bold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -ml-1 w-full"
+              />
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-sm font-medium text-slate-500">{photographer.role}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
@@ -79,11 +214,23 @@ export default function PhotographerProfilePage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all">
+          <button 
+            onClick={() => router.push('/team')}
+            className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all"
+          >
             Cancel
           </button>
-          <button className="px-8 py-3 rounded-xl font-bold text-white bg-primary shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all">
-            Save Changes
+          <button 
+            onClick={handleSave}
+            disabled={saving}
+            className="px-8 py-3 rounded-xl font-bold text-white bg-primary shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {saving ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Saving...
+              </>
+            ) : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -156,18 +303,18 @@ export default function PhotographerProfilePage() {
                       key={product.id}
                       onClick={() => toggleDeliverable(product.id)}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                        photographer.deliverables.includes(product.id)
+                        photographer.deliverable_products.includes(product.id)
                         ? 'bg-primary/5 border-primary text-primary shadow-sm'
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
                       }`}
                     >
                       <span className={`material-symbols-outlined text-xl ${
-                        photographer.deliverables.includes(product.id) ? 'text-primary' : 'text-slate-400'
+                        photographer.deliverable_products.includes(product.id) ? 'text-primary' : 'text-slate-400'
                       }`}>
                         {product.icon}
                       </span>
                       <span className="text-xs font-bold truncate">{product.label}</span>
-                      {photographer.deliverables.includes(product.id) && (
+                      {photographer.deliverable_products.includes(product.id) && (
                         <span className="material-symbols-outlined text-sm ml-auto">check_circle</span>
                       )}
                     </button>
@@ -205,8 +352,8 @@ export default function PhotographerProfilePage() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Internal Notes</label>
                 <textarea 
                   rows={1}
-                  value={photographer.notes}
-                  onChange={(e) => setPhotographer({...photographer, notes: e.target.value})}
+                  value={photographer.internal_notes}
+                  onChange={(e) => setPhotographer({...photographer, internal_notes: e.target.value})}
                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
                 />
               </div>
