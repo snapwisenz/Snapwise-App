@@ -144,12 +144,12 @@ export default function PhotographerProfilePage() {
     { id: 'ground_photos', label: 'Ground Photos', icon: 'photo_camera' },
     { id: 'drone', label: 'Drone Photos/Video', icon: 'flight' },
     { id: 'reels', label: 'Social Reels', icon: 'movie' },
-    { id: 'twilight', label: 'Twilight Shoots', icon: 'wb_twilight' },
+    { id: 'twilight', label: 'Twilight Shoots', icon: 'brightness_low' },
     { id: 'video', label: 'Full Video Production', icon: 'videocam' },
-    { id: 'floorplan', label: 'Floorplans', icon: 'architecture' },
+    { id: 'floorplan', label: 'Floorplans', icon: 'layers' },
     { id: 'site_plan', label: 'Site Plans', icon: 'map' },
     { id: 'matterport', label: '3D Tours (Matterport)', icon: 'view_in_ar' },
-    { id: 'virtual_staging', label: 'Virtual Staging', icon: 'chair' },
+    { id: 'virtual_staging', label: 'Virtual Staging', icon: 'weekend' },
   ];
 
   const recentJobs = [
@@ -192,7 +192,7 @@ export default function PhotographerProfilePage() {
             href="/team"
             className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-primary border border-slate-200 dark:border-slate-700 transition-all shadow-sm active:scale-90"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-icons">arrow_back</span>
           </Link>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl border border-primary/20 overflow-hidden">
@@ -242,7 +242,7 @@ export default function PhotographerProfilePage() {
           {/* Information Card */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-xl">contact_page</span>
+              <span className="material-icons text-primary text-xl">contact_page</span>
               <h2 className="font-bold text-slate-900 dark:text-white">General Information</h2>
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -280,7 +280,7 @@ export default function PhotographerProfilePage() {
           {/* Equipment & Capabilities */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-xl">camera</span>
+              <span className="material-icons text-primary text-xl">camera</span>
               <h2 className="font-bold text-slate-900 dark:text-white">Equipment & Deliverables</h2>
             </div>
             <div className="p-6 space-y-6">
@@ -308,14 +308,14 @@ export default function PhotographerProfilePage() {
                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
                       }`}
                     >
-                      <span className={`material-symbols-outlined text-xl ${
+                      <span className={`material-icons text-xl ${
                         photographer.deliverable_products.includes(product.id) ? 'text-primary' : 'text-slate-400'
                       }`}>
                         {product.icon}
                       </span>
                       <span className="text-xs font-bold truncate">{product.label}</span>
                       {photographer.deliverable_products.includes(product.id) && (
-                        <span className="material-symbols-outlined text-sm ml-auto">check_circle</span>
+                        <span className="material-icons text-sm ml-auto">check_circle</span>
                       )}
                     </button>
                   ))}
@@ -328,7 +328,7 @@ export default function PhotographerProfilePage() {
           <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-slate-500 text-xl">admin_panel_settings</span>
+                <span className="material-icons text-slate-500 text-xl">admin_panel_settings</span>
                 <h2 className="font-bold text-slate-700 dark:text-slate-300">Internal Administration</h2>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 uppercase tracking-tighter">
@@ -367,7 +367,7 @@ export default function PhotographerProfilePage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-full">
             <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-xl">history</span>
+                <span className="material-icons text-primary text-xl">history</span>
                 <h2 className="font-bold text-slate-900 dark:text-white">Recent Work</h2>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
@@ -400,7 +400,7 @@ export default function PhotographerProfilePage() {
             <div className="p-4 bg-slate-50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800/50 mt-auto">
               <button className="w-full py-2 text-xs font-bold text-slate-500 hover:text-primary transition-all flex items-center justify-center gap-2">
                 View Full History
-                <span className="material-symbols-outlined text-sm">open_in_new</span>
+                <span className="material-icons text-sm">open_in_new</span>
               </button>
             </div>
           </div>

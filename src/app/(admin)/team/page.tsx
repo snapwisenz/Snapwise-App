@@ -90,7 +90,7 @@ export default function TeamManagementPage() {
               <p className="text-base text-primary/80 dark:text-primary-200/80 max-w-md mt-1">92% of your photographers are meeting their 24-hour delivery window this week.</p>
             </div>
             <div className="absolute right-0 top-0 h-full w-1/3 opacity-10 transform translate-x-12 translate-y-4">
-              <span className="material-symbols-outlined text-[120px] text-primary">monitoring</span>
+              <span className="material-icons text-[120px] text-primary">monitoring</span>
             </div>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function TeamManagementPage() {
                     onClick={() => setIsInviteOpen(false)}
                     className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
-                    <span className="material-symbols-outlined">close</span>
+                    <span className="material-icons">close</span>
                   </button>
                 </div>
                 <div className="flex-1 relative p-6 overflow-y-auto">
@@ -203,7 +203,7 @@ export default function TeamManagementPage() {
                       <div className="flex justify-between items-center">
                         <label className="font-bold text-slate-500 text-xs uppercase tracking-wider">Internal Pay Rate</label>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[10px]">visibility_off</span>
+                          <span className="material-icons text-[10px]">visibility_off</span>
                           Admin Only
                         </span>
                       </div>
@@ -215,7 +215,7 @@ export default function TeamManagementPage() {
                     </div>
                     <div className="pt-6">
                       <div className="p-4 rounded-xl bg-success/10 border border-success/20 flex gap-3">
-                        <span className="material-symbols-outlined text-success">info</span>
+                        <span className="material-icons text-success">info</span>
                         <p className="text-xs text-success-700 dark:text-success-300">Snapwise invites grant limited dashboard access until the photographer completes their onboarding verification.</p>
                       </div>
                     </div>
