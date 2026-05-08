@@ -26,6 +26,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <span className="material-icons mr-3 text-xl">calendar_today</span>
             <span className="font-medium">Jobs</span>
           </Link>
+          <Link href="/agencies" className="flex items-center px-6 py-3 border-l-4 border-transparent text-slate-500 hover:bg-neutral-soft dark:hover:bg-slate-800 transition-colors">
+            <span className="material-icons mr-3 text-xl">business</span>
+            <span className="font-medium">Agencies</span>
+          </Link>
           <Link href="/team" className="flex items-center px-6 py-3 border-l-4 border-transparent text-slate-500 hover:bg-neutral-soft dark:hover:bg-slate-800 transition-colors">
             <span className="material-icons mr-3 text-xl">groups</span>
             <span className="font-medium">Team</span>

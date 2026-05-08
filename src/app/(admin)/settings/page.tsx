@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import AgenciesCRM from './AgenciesCRM';
 
 export default function SettingsPage() {
   const supabase = createClient();
-  const [activeTab, setActiveTab] = useState<'general' | 'agencies'>('general');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
@@ -102,38 +100,19 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
-            <p className="text-sm text-slate-500 mt-1">Configure your pricing and manage agencies.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pricing Settings</h1>
+            <p className="text-sm text-slate-500 mt-1">Configure your base pricing for custom package calculations.</p>
           </div>
-          {activeTab === 'general' && (
-            <button 
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-slate-200 dark:border-slate-700">
           <button 
-            onClick={() => setActiveTab('general')}
-            className={`pb-4 px-4 font-bold text-sm transition-colors border-b-2 ${activeTab === 'general' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full font-bold shadow-sm transition-all disabled:opacity-50"
           >
-            General Pricing
-          </button>
-          <button 
-            onClick={() => setActiveTab('agencies')}
-            className={`pb-4 px-4 font-bold text-sm transition-colors border-b-2 ${activeTab === 'agencies' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-          >
-            Agencies & Agents
+            {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'general' ? (
+        {/* Pricing Form */}
         <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 dark:border-slate-700">
           
           {/* Per Unit Assets */}
@@ -248,9 +227,6 @@ export default function SettingsPage() {
           </section>
 
         </div>
-        ) : (
-          <AgenciesCRM />
-        )}
       </div>
     </div>
   );

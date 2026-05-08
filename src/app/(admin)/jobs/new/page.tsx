@@ -90,15 +90,23 @@ export default function NewJobPage() {
   // Fetch packages when agent changes
   useEffect(() => {
     async function fetchPackages() {
-      if (!selectedAgent) {
+      if (!selectedAgent || !selectedAgency) {
         setPackages([]);
         return;
       }
-      const { data } = await supabase.from('agent_packages').select('*').eq('agent_id', selectedAgent);
+      const subAgency = subAgenciesList.find(s => s.id === selectedAgency);
+      const parentAgencyId = subAgency?.agency_id;
+      
+      let queryStr = `agent_id.eq.${selectedAgent}`;
+      if (parentAgencyId) {
+        queryStr += `,agency_id.eq.${parentAgencyId}`;
+      }
+
+      const { data } = await supabase.from('packages').select('*').or(queryStr);
       if (data) setPackages(data);
     }
     fetchPackages();
-  }, [selectedAgent, supabase]);
+  }, [selectedAgent, selectedAgency, subAgenciesList, supabase]);
 
   const customPrice = useMemo(() => {
     return (
