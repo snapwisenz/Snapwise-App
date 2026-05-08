@@ -18,7 +18,6 @@ export default function TeamManagementPage() {
             onClick={() => setIsInviteOpen(true)}
             className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all"
           >
-            <span className="material-symbols-outlined">person_add</span>
             Invite Photographer
           </button>
         </div>
@@ -28,10 +27,6 @@ export default function TeamManagementPage() {
           <div className="col-span-1 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Total Team</p>
             <h3 className="text-4xl font-bold text-slate-900 dark:text-white mt-1">24</h3>
-            <div className="mt-3 flex items-center text-success text-sm font-bold">
-              <span className="material-symbols-outlined text-sm mr-1">trending_up</span>
-              +2 this month
-            </div>
           </div>
           
           <div className="col-span-1 md:col-span-3 bg-primary/10 dark:bg-primary/5 p-6 rounded-xl border border-primary/20 flex items-center justify-between overflow-hidden relative">
@@ -151,14 +146,6 @@ export default function TeamManagementPage() {
           </div>
         </div>
 
-        {/* Visual Break Section */}
-        <div className="h-48 w-full rounded-2xl overflow-hidden relative group">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="https://lh3.googleusercontent.com/aida/ADBb0ujXswm4wbYt6r_2805i9kGNie9GvdMlgeqm33RDrbtpU470OQ5Gk14lFf_fAm_ZDEEG0T4TCMSoW7b06CRMSqv75Gd8fVFJJg68gh8iXcVciYy109QfqVrPzOskA704dNdBG8JY54OPfoEFPPOHTeZQtqbIJy-KJBGlF8WDhVnSAMkYf5HCe9apsymz4rvyy4iqhkcsOpT26_TBbttVoNLmk3h73amfhOC-0PA7YogmZPJRACGRwuTiTHdlYniBZFTV9E20Lr8hsA" alt="Team Collaboration" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
-            <p className="text-white text-2xl font-bold">Building the future of property media.</p>
-          </div>
-        </div>
       </div>
 
       {/* Slide-over Panel (Open State) */}
