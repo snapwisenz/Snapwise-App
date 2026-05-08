@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Outlined');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
 
 /* Tailwind CSS v4 */
 @import "tailwindcss";
@@ -22,9 +22,9 @@
   --color-neutral-soft: #f1f5f9; /* Slate 100 */
   --color-neutral-border: #e2e8f0; /* Slate 200 */
 
-  --font-display: "Manrope", sans-serif;
-  --font-heading: "Manrope", sans-serif;
-  --font-sans: "Manrope", sans-serif;
+  --font-display: "DM Sans", sans-serif;
+  --font-heading: "DM Sans", sans-serif;
+  --font-sans: "Noto Sans", sans-serif;
 }
 
 :root {
