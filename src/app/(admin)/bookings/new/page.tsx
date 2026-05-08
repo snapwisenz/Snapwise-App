@@ -52,6 +52,7 @@ export default function NewJobPage() {
     floorplan_price: 75,
     matterport_price: 100,
     virtual_staging_price: 30,
+    custom_pricing_rules: [] as any[],
   });
 
   const supabase = createClient();
@@ -109,11 +110,32 @@ export default function NewJobPage() {
   }, [selectedAgent, selectedAgency, subAgenciesList, supabase]);
 
   const customPrice = useMemo(() => {
+    const calculateProductPrice = (qtyStr: string | number, productKey: string, unitPrice: number) => {
+      const qty = Number(qtyStr) || 0;
+      if (qty === 0) return 0;
+      
+      const rules = pricingSettings.custom_pricing_rules?.filter(r => r.product === productKey).sort((a, b) => b.quantity - a.quantity) || [];
+      
+      let remainingQty = qty;
+      let total = 0;
+      
+      for (const rule of rules) {
+        if (remainingQty >= rule.quantity) {
+          const times = Math.floor(remainingQty / rule.quantity);
+          total += times * rule.price;
+          remainingQty %= rule.quantity;
+        }
+      }
+      
+      total += remainingQty * unitPrice;
+      return total;
+    };
+
     return (
-      (Number(customOptions.groundPhotos) || 0) * pricingSettings.ground_photo_price +
-      (Number(customOptions.drone) || 0) * pricingSettings.drone_photo_price +
-      (Number(customOptions.reels) || 0) * pricingSettings.reel_price +
-      (Number(customOptions.twilight) || 0) * pricingSettings.twilight_photo_price +
+      calculateProductPrice(customOptions.groundPhotos, 'ground_photo', pricingSettings.ground_photo_price) +
+      calculateProductPrice(customOptions.drone, 'drone_photo', pricingSettings.drone_photo_price) +
+      calculateProductPrice(customOptions.reels, 'reel', pricingSettings.reel_price) +
+      calculateProductPrice(customOptions.twilight, 'twilight_photo', pricingSettings.twilight_photo_price) +
       (customOptions.video === 'basic' ? pricingSettings.video_basic_price :
        customOptions.video === 'standard' ? pricingSettings.video_standard_price :
        customOptions.video === 'premium' ? pricingSettings.video_premium_price :
@@ -121,7 +143,7 @@ export default function NewJobPage() {
       (customOptions.sitePlan ? pricingSettings.site_plan_price : 0) +
       (customOptions.floorplan ? pricingSettings.floorplan_price : 0) +
       (customOptions.matterport ? pricingSettings.matterport_price : 0) +
-      (Number(customOptions.virtualStagingQty) || 0) * pricingSettings.virtual_staging_price
+      calculateProductPrice(customOptions.virtualStagingQty, 'virtual_staging', pricingSettings.virtual_staging_price)
     );
   }, [customOptions, pricingSettings]);
 

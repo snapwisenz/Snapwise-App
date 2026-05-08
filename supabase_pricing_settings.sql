@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.agency_settings (
     floorplan_price NUMERIC DEFAULT 75,
     matterport_price NUMERIC DEFAULT 100,
     virtual_staging_price NUMERIC DEFAULT 30,
+    custom_pricing_rules JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id)

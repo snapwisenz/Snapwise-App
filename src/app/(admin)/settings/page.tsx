@@ -3,6 +3,28 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
+interface PricingRule {
+  id: string;
+  quantity: number;
+  product: string;
+  price: number;
+}
+
+const PRODUCT_OPTIONS = [
+  { value: 'ground_photo', label: 'Ground Photo' },
+  { value: 'drone_photo', label: 'Drone Photo' },
+  { value: 'reel', label: 'Reel' },
+  { value: 'twilight_photo', label: 'Twilight Photo' },
+  { value: 'video_basic', label: 'Basic Video' },
+  { value: 'video_standard', label: 'Standard Video' },
+  { value: 'video_premium', label: 'Premium Video' },
+  { value: 'video_ai', label: 'AI Video' },
+  { value: 'site_plan', label: 'Site Plan' },
+  { value: 'floorplan', label: 'Floorplan' },
+  { value: 'matterport', label: 'Matterport 3D Tour' },
+  { value: 'virtual_staging', label: 'Virtual Staging' }
+];
+
 export default function SettingsPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
@@ -20,6 +42,7 @@ export default function SettingsPage() {
     floorplan_price: 75,
     matterport_price: 100,
     virtual_staging_price: 30,
+    custom_pricing_rules: [] as PricingRule[],
   });
 
   useEffect(() => {
@@ -39,7 +62,8 @@ export default function SettingsPage() {
       if (data) {
         setSettings({
           ...settings,
-          ...data
+          ...data,
+          custom_pricing_rules: data.custom_pricing_rules || []
         });
       }
       setLoading(false);
@@ -72,6 +96,7 @@ export default function SettingsPage() {
         floorplan_price: settings.floorplan_price,
         matterport_price: settings.matterport_price,
         virtual_staging_price: settings.virtual_staging_price,
+        custom_pricing_rules: settings.custom_pricing_rules,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
 
@@ -88,6 +113,32 @@ export default function SettingsPage() {
     setSettings({
       ...settings,
       [key]: Number(value) || 0
+    });
+  };
+
+  const addPricingRule = () => {
+    setSettings({
+      ...settings,
+      custom_pricing_rules: [
+        ...settings.custom_pricing_rules,
+        { id: Date.now().toString(), quantity: 1, product: 'ground_photo', price: 0 }
+      ]
+    });
+  };
+
+  const removePricingRule = (id: string) => {
+    setSettings({
+      ...settings,
+      custom_pricing_rules: settings.custom_pricing_rules.filter(rule => rule.id !== id)
+    });
+  };
+
+  const updatePricingRule = (id: string, field: keyof PricingRule, value: string | number) => {
+    setSettings({
+      ...settings,
+      custom_pricing_rules: settings.custom_pricing_rules.map(rule => 
+        rule.id === id ? { ...rule, [field]: value } : rule
+      )
     });
   };
 
@@ -223,6 +274,77 @@ export default function SettingsPage() {
                   <input type="number" value={settings.matterport_price} onChange={(e) => handleChange('matterport_price', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-8 pr-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all" />
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Custom Tiered Pricing */}
+          <section className="mt-10 pt-10 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                <span className="material-icons-outlined text-base">layers</span> Custom Tiered Pricing
+              </h2>
+              <button 
+                onClick={addPricingRule}
+                className="text-xs font-bold bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 transition-colors flex items-center gap-1"
+              >
+                <span className="material-icons-outlined text-sm">add</span> Add Rule
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {settings.custom_pricing_rules.length === 0 ? (
+                <div className="text-sm text-slate-500 italic bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
+                  No custom pricing rules added yet. Add a rule to set specific group prices (e.g. 5x Ground Photos = $100).
+                </div>
+              ) : (
+                settings.custom_pricing_rules.map((rule) => (
+                  <div key={rule.id} className="flex flex-col md:flex-row items-end md:items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div className="flex-1 w-full md:w-auto">
+                      <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Quantity</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={rule.quantity} 
+                        onChange={(e) => updatePricingRule(rule.id, 'quantity', Number(e.target.value))} 
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" 
+                      />
+                    </div>
+                    <div className="flex-[2] w-full md:w-auto">
+                      <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Product</label>
+                      <select 
+                        value={rule.product} 
+                        onChange={(e) => updatePricingRule(rule.id, 'product', e.target.value)}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm appearance-none"
+                      >
+                        {PRODUCT_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1 w-full md:w-auto">
+                      <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Total Price ($)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">$</span>
+                        <input 
+                          type="number" 
+                          value={rule.price} 
+                          onChange={(e) => updatePricingRule(rule.id, 'price', Number(e.target.value))} 
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-7 pr-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" 
+                        />
+                      </div>
+                    </div>
+                    <div className="w-full md:w-auto flex justify-end">
+                      <button 
+                        onClick={() => removePricingRule(rule.id)}
+                        className="p-2.5 text-slate-400 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
+                        title="Remove Rule"
+                      >
+                        <span className="material-icons-outlined text-xl">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
