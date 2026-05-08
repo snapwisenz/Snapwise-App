@@ -31,6 +31,14 @@ function NewAgentForm() {
     price: '',
     ground_photos_qty: 0,
     drone_qty: 0,
+    reels_qty: 0,
+    twilight_qty: 0,
+    video_package: '',
+    site_plan: false,
+    floorplan: false,
+    matterport: false,
+    virtual_staging: false,
+    virtual_staging_qty: 0,
     drone_included: false,
   });
   const [addedPackages, setAddedPackages] = useState<any[]>([]);
@@ -93,8 +101,16 @@ function NewAgentForm() {
       price: Number(newPackage.price),
       ground_photos_qty: newPackage.ground_photos_qty,
       drone_qty: newPackage.drone_included ? newPackage.drone_qty : 0,
+      reels_qty: newPackage.reels_qty,
+      twilight_qty: newPackage.twilight_qty,
+      video_package: newPackage.video_package,
+      site_plan: newPackage.site_plan,
+      floorplan: newPackage.floorplan,
+      matterport: newPackage.matterport,
+      virtual_staging: newPackage.virtual_staging,
+      virtual_staging_qty: newPackage.virtual_staging_qty
     }]);
-    setNewPackage({ name: '', price: '', ground_photos_qty: 0, drone_qty: 0, drone_included: false });
+    setNewPackage({ name: '', price: '', ground_photos_qty: 0, drone_qty: 0, drone_included: false, reels_qty: 0, twilight_qty: 0, video_package: '', site_plan: false, floorplan: false, matterport: false, virtual_staging: false, virtual_staging_qty: 0 });
     setShowPackageBuilder(false);
   };
 
@@ -246,7 +262,7 @@ function NewAgentForm() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Photo Count</label>
                     <input 
@@ -257,25 +273,67 @@ function NewAgentForm() {
                       onChange={e => setNewPackage({ ...newPackage, ground_photos_qty: Number(e.target.value) })}
                     />
                   </div>
-                  <div className="flex items-center gap-4 pt-6">
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer" 
-                        checked={newPackage.drone_included}
-                        onChange={e => setNewPackage({ ...newPackage, drone_included: e.target.checked })}
-                      />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
-                      <span className="ml-3 text-sm font-bold text-slate-700">Drone Included?</span>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Drone Qty</label>
+                    <input 
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all"
+                      placeholder="e.g. 5"
+                      type="number"
+                      value={newPackage.drone_qty}
+                      onChange={e => setNewPackage({ ...newPackage, drone_qty: Number(e.target.value), drone_included: Number(e.target.value) > 0 })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Reels Qty</label>
+                    <input 
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all"
+                      type="number"
+                      value={newPackage.reels_qty}
+                      onChange={e => setNewPackage({ ...newPackage, reels_qty: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Twilight Qty</label>
+                    <input 
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all"
+                      type="number"
+                      value={newPackage.twilight_qty}
+                      onChange={e => setNewPackage({ ...newPackage, twilight_qty: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Video Type</label>
+                  <select value={newPackage.video_package} onChange={e => setNewPackage({...newPackage, video_package: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none transition-all">
+                    <option value="">None</option>
+                    <option value="basic">Basic Video</option>
+                    <option value="standard">Standard Video</option>
+                    <option value="premium">Premium Video</option>
+                    <option value="ai">AI Video</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={newPackage.site_plan} onChange={e => setNewPackage({...newPackage, site_plan: e.target.checked})} className="rounded text-secondary focus:ring-secondary w-4 h-4" />
+                    <span className="text-sm font-medium text-slate-700">Site Plan</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={newPackage.floorplan} onChange={e => setNewPackage({...newPackage, floorplan: e.target.checked})} className="rounded text-secondary focus:ring-secondary w-4 h-4" />
+                    <span className="text-sm font-medium text-slate-700">Floorplan</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={newPackage.matterport} onChange={e => setNewPackage({...newPackage, matterport: e.target.checked})} className="rounded text-secondary focus:ring-secondary w-4 h-4" />
+                    <span className="text-sm font-medium text-slate-700">Matterport</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={newPackage.virtual_staging} onChange={e => setNewPackage({...newPackage, virtual_staging: e.target.checked})} className="rounded text-secondary focus:ring-secondary w-4 h-4" />
+                      <span className="text-sm font-medium text-slate-700">Virtual Staging</span>
                     </label>
-                    {newPackage.drone_included && (
-                      <input 
-                        className="w-20 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none animate-in fade-in duration-200"
-                        placeholder="Qty"
-                        type="number"
-                        value={newPackage.drone_qty}
-                        onChange={e => setNewPackage({ ...newPackage, drone_qty: Number(e.target.value) })}
-                      />
+                    {newPackage.virtual_staging && (
+                      <input type="number" placeholder="Qty" value={newPackage.virtual_staging_qty} onChange={e => setNewPackage({...newPackage, virtual_staging_qty: Number(e.target.value)})} className="w-16 px-2 py-1 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none" />
                     )}
                   </div>
                 </div>
