@@ -30,7 +30,8 @@ export default function AgenciesPage() {
   const [showPackageModal, setShowPackageModal] = useState(false);
   const [packageContext, setPackageContext] = useState<{type: 'agency'|'agent', id: string, name: string} | null>(null);
   const [newPackage, setNewPackage] = useState({
-    name: '', price: '', ground_photos_qty: 0, drone_qty: 0, video_package: ''
+    name: '', price: '', ground_photos_qty: 0, drone_qty: 0, reels_qty: 0, twilight_qty: 0, video_package: '',
+    site_plan: false, floorplan: false, matterport: false, virtual_staging: false, virtual_staging_qty: 0
   });
 
   const fetchData = async () => {
@@ -102,7 +103,14 @@ export default function AgenciesPage() {
       price: Number(newPackage.price),
       ground_photos_qty: newPackage.ground_photos_qty,
       drone_qty: newPackage.drone_qty,
-      video_package: newPackage.video_package
+      reels_qty: newPackage.reels_qty,
+      twilight_qty: newPackage.twilight_qty,
+      video_package: newPackage.video_package,
+      site_plan: newPackage.site_plan,
+      floorplan: newPackage.floorplan,
+      matterport: newPackage.matterport,
+      virtual_staging: newPackage.virtual_staging,
+      virtual_staging_qty: newPackage.virtual_staging_qty
     };
 
     if (packageContext.type === 'agent') {
@@ -112,7 +120,7 @@ export default function AgenciesPage() {
     }
 
     await supabase.from('packages').insert([payload]);
-    setNewPackage({ name: '', price: '', ground_photos_qty: 0, drone_qty: 0, video_package: '' });
+    setNewPackage({ name: '', price: '', ground_photos_qty: 0, drone_qty: 0, reels_qty: 0, twilight_qty: 0, video_package: '', site_plan: false, floorplan: false, matterport: false, virtual_staging: false, virtual_staging_qty: 0 });
     fetchData();
   };
 
@@ -345,9 +353,17 @@ export default function AgenciesPage() {
                     <label className="block text-xs font-semibold text-slate-500 mb-1">Drone Qty</label>
                     <input type="number" value={newPackage.drone_qty} onChange={e => setNewPackage({...newPackage, drone_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Reels Qty</label>
+                    <input type="number" value={newPackage.reels_qty} onChange={e => setNewPackage({...newPackage, reels_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Twilight Qty</label>
+                    <input type="number" value={newPackage.twilight_qty} onChange={e => setNewPackage({...newPackage, twilight_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Video Included</label>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Video Type</label>
                   <select value={newPackage.video_package} onChange={e => setNewPackage({...newPackage, video_package: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm">
                     <option value="">None</option>
                     <option value="basic">Basic Video</option>
@@ -355,6 +371,32 @@ export default function AgenciesPage() {
                     <option value="premium">Premium Video</option>
                     <option value="ai">AI Video</option>
                   </select>
+                </div>
+                <div className="grid grid-cols-3 gap-x-4 gap-y-2 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={newPackage.site_plan} onChange={e => setNewPackage({...newPackage, site_plan: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Site Plan</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={newPackage.floorplan} onChange={e => setNewPackage({...newPackage, floorplan: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Floorplan</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={newPackage.matterport} onChange={e => setNewPackage({...newPackage, matterport: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Matterport</span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-4 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer flex-1">
+                    <input type="checkbox" checked={newPackage.virtual_staging} onChange={e => setNewPackage({...newPackage, virtual_staging: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Virtual Staging</span>
+                  </label>
+                  {newPackage.virtual_staging && (
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs text-slate-500 font-semibold">Qty:</span>
+                      <input type="number" value={newPackage.virtual_staging_qty} onChange={e => setNewPackage({...newPackage, virtual_staging_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1 text-sm" />
+                    </div>
+                  )}
                 </div>
                 <div className="pt-4 flex gap-3">
                   <button type="button" onClick={() => setShowPackageModal(false)} className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 text-sm">Close</button>
