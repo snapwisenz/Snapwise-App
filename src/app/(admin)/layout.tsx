@@ -1,48 +1,13 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import Sidebar from '@/components/Sidebar';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-display text-slate-800 dark:text-slate-200">
       
       {/* Sidebar */}
-      <aside className="w-[240px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full z-20">
-        <div className="h-16 flex items-center px-6 gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Snapwise Logo" className="w-8 h-8 object-contain" />
-          <span className="text-xl font-bold heading-font tracking-tight text-slate-900 dark:text-white">Snapwise</span>
-        </div>
-        
-        <nav className="flex-1 mt-6">
-          <Link href="/dashboard" className="flex items-center px-6 py-3 border-l-4 border-primary bg-primary/5 text-primary group">
-            <span className="material-icons mr-3 text-xl">dashboard</span>
-            <span className="font-medium">Dashboard</span>
-          </Link>
-          <Link href="/tasks" className="flex items-center px-6 py-3 border-l-4 border-transparent text-slate-500 hover:bg-neutral-soft dark:hover:bg-slate-800 transition-colors">
-            <span className="material-icons mr-3 text-xl">assignment</span>
-            <span className="font-medium">Tasks</span>
-          </Link>
-          <Link href="/jobs" className="flex items-center px-6 py-3 border-l-4 border-transparent text-slate-500 hover:bg-neutral-soft dark:hover:bg-slate-800 transition-colors">
-            <span className="material-icons mr-3 text-xl">calendar_today</span>
-            <span className="font-medium">Jobs</span>
-          </Link>
-          <Link href="/agencies" className="flex items-center px-6 py-3 border-l-4 border-transparent text-slate-500 hover:bg-neutral-soft dark:hover:bg-slate-800 transition-colors">
-            <span className="material-icons mr-3 text-xl">business</span>
-            <span className="font-medium">Agencies</span>
-          </Link>
-          <Link href="/team" className="flex items-center px-6 py-3 border-l-4 border-transparent text-slate-500 hover:bg-neutral-soft dark:hover:bg-slate-800 transition-colors">
-            <span className="material-icons mr-3 text-xl">groups</span>
-            <span className="font-medium">Team</span>
-          </Link>
-        </nav>
-        
-        <div className="p-6">
-          <Link href="/settings" className="flex items-center text-slate-500 hover:text-primary transition-colors">
-            <span className="material-icons mr-3 text-xl">settings</span>
-            <span className="font-medium">Settings</span>
-          </Link>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main Content */}
       <div className="flex-1 ml-[240px]">
