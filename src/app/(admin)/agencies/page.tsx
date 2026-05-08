@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
 export default function AgenciesPage() {
+  const router = useRouter();
   const supabase = createClient();
   const [agencies, setAgencies] = useState<any[]>([]);
   const [subAgencies, setSubAgencies] = useState<any[]>([]);
@@ -68,14 +70,20 @@ export default function AgenciesPage() {
 
     const { data: agencyData, error } = await supabase.from('agencies').insert([{ name: newAgencyName, user_id: session.user.id }]).select();
     
-    if (!error && agencyData && newAgencyLocation.trim()) {
-      await supabase.from('sub_agencies').insert([{ name: newAgencyLocation, agency_id: agencyData[0].id }]);
+    if (!error && agencyData && agencyData.length > 0) {
+      if (newAgencyLocation.trim()) {
+        await supabase.from('sub_agencies').insert([{ name: newAgencyLocation, agency_id: agencyData[0].id }]);
+      }
+      
+      setNewAgencyName('');
+      setNewAgencyLocation('');
+      setShowAgencyModal(false);
+      
+      router.push(`/agencies/${agencyData[0].id}`);
+    } else {
+      console.error("Error creating agency:", error);
+      fetchData();
     }
-    
-    setNewAgencyName('');
-    setNewAgencyLocation('');
-    setShowAgencyModal(false);
-    fetchData();
   };
 
   const handleAddPackage = async (e: React.FormEvent) => {

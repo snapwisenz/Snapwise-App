@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS public.agencies (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name TEXT NOT NULL,
+    website TEXT,
+    notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
