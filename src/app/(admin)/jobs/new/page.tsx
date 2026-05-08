@@ -12,8 +12,14 @@ export default function NewJobPage() {
   const [overlapWarning, setOverlapWarning] = useState(false);
 
   // Cascading State Management
-  const [selectedAgency, setSelectedAgency] = useState('');
+  const [selectedAgency, setSelectedAgency] = useState(''); // Stores sub_agency_id
   const [selectedAgent, setSelectedAgent] = useState('');
+  
+  // Real Data State
+  const [agenciesList, setAgenciesList] = useState<any[]>([]);
+  const [subAgenciesList, setSubAgenciesList] = useState<any[]>([]);
+  const [agentsList, setAgentsList] = useState<any[]>([]);
+  const [packages, setPackages] = useState<any[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<{name: string, duration: number, price: string, photos?: string} | null>(null);
   const [idealMode, setIdealMode] = useState(true); // true = Anchor slots (Ideal), false = Liquid mode
 
@@ -51,14 +57,48 @@ export default function NewJobPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    async function fetchPricing() {
+    async function fetchPricingAndAgencies() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data } = await supabase.from('agency_settings').select('*').eq('user_id', session.user.id).single();
-      if (data) setPricingSettings(prev => ({ ...prev, ...data }));
+      
+      const [pricingRes, agenciesRes, subAgenciesRes] = await Promise.all([
+        supabase.from('agency_settings').select('*').eq('user_id', session.user.id).single(),
+        supabase.from('agencies').select('*').eq('user_id', session.user.id),
+        supabase.from('sub_agencies').select('*')
+      ]);
+
+      if (pricingRes.data) setPricingSettings(prev => ({ ...prev, ...pricingRes.data }));
+      if (agenciesRes.data) setAgenciesList(agenciesRes.data);
+      if (subAgenciesRes.data) setSubAgenciesList(subAgenciesRes.data);
     }
-    fetchPricing();
+    fetchPricingAndAgencies();
   }, [supabase]);
+
+  // Fetch agents when sub-agency changes
+  useEffect(() => {
+    async function fetchAgents() {
+      if (!selectedAgency) {
+        setAgentsList([]);
+        return;
+      }
+      const { data } = await supabase.from('agents').select('*').eq('sub_agency_id', selectedAgency);
+      if (data) setAgentsList(data);
+    }
+    fetchAgents();
+  }, [selectedAgency, supabase]);
+
+  // Fetch packages when agent changes
+  useEffect(() => {
+    async function fetchPackages() {
+      if (!selectedAgent) {
+        setPackages([]);
+        return;
+      }
+      const { data } = await supabase.from('agent_packages').select('*').eq('agent_id', selectedAgent);
+      if (data) setPackages(data);
+    }
+    fetchPackages();
+  }, [selectedAgent, supabase]);
 
   const customPrice = useMemo(() => {
     return (
@@ -123,11 +163,7 @@ export default function NewJobPage() {
     }
   };
 
-  // Mock packages that appear when an agent is selected
-  const packages = [
-    { id: '1', name: 'Luxe Starter', duration: 1, photos: '20 Photos + Floorplan', price: '$249.00', icon: 'auto_awesome' },
-    { id: '2', name: 'The Works', duration: 2, photos: 'Photos, Drone, 3D Tour', price: '$499.00', icon: 'workspace_premium' }
-  ];
+
 
   return (
     <>
@@ -215,18 +251,24 @@ export default function NewJobPage() {
                   </div>
                   <select 
                     value={selectedAgency}
-                    onChange={(e) => setSelectedAgency(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedAgency(e.target.value);
+                      setSelectedAgent('');
+                      setSelectedPackage(null);
+                    }}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all"
                   >
-                    <option value="">Select Agency</option>
-                    <option value="1">Luxe Estates Realty</option>
-                    <option value="2">Metro Dwellings</option>
+                    <option value="">Select Sub-Agency</option>
+                    {subAgenciesList.map(sub => {
+                      const parent = agenciesList.find(a => a.id === sub.agency_id);
+                      const displayName = parent ? `${parent.name} - ${sub.name}` : sub.name;
+                      return <option key={sub.id} value={sub.id}>{displayName}</option>;
+                    })}
                   </select>
                 </div>
                 <div>
                   <div className="flex justify-between items-center mb-2 ml-1">
                     <label className="block text-xs font-semibold text-slate-500">Select Agent</label>
-                    <button className="text-primary text-[10px] font-bold uppercase hover:underline">+ Add New</button>
                   </div>
                   <select 
                     value={selectedAgent}
@@ -234,12 +276,13 @@ export default function NewJobPage() {
                       setSelectedAgent(e.target.value);
                       if (!e.target.value) setSelectedPackage(null); // reset package if agent cleared
                     }}
-                    disabled={!selectedAgency}
+                    disabled={!selectedAgency || agentsList.length === 0}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all disabled:opacity-50"
                   >
                     <option value="">Select Agent</option>
-                    <option value="1">Sarah Jenkins</option>
-                    <option value="2">Tom Holland</option>
+                    {agentsList.map(agent => (
+                      <option key={agent.id} value={agent.id}>{agent.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -264,15 +307,15 @@ export default function NewJobPage() {
                       return (
                         <button 
                           key={pkg.id}
-                          onClick={() => setSelectedPackage({ name: pkg.name, duration: pkg.duration, price: pkg.price })}
+                          onClick={() => setSelectedPackage({ name: pkg.name, duration: 2, price: `$${pkg.price}` })}
                           className={`p-5 rounded-2xl text-left transition-all shadow-sm border-2 ${isSelected ? 'border-primary bg-primary/5 ring-offset-2' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary/50'}`}
                         >
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${isSelected ? 'bg-primary/10 text-primary' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
-                            <span className="material-icons-outlined text-xl">{pkg.icon}</span>
+                            <span className="material-icons-outlined text-xl">workspace_premium</span>
                           </div>
                           <p className={`font-bold text-sm ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>{pkg.name}</p>
-                          <p className="text-xs text-slate-500 mt-1">{pkg.duration}hr • {pkg.photos}</p>
-                          <p className={`font-bold text-sm mt-3 ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>{pkg.price}</p>
+                          <p className="text-xs text-slate-500 mt-1">2hr • {pkg.ground_photos_qty} Photos, {pkg.drone_qty} Drone</p>
+                          <p className={`font-bold text-sm mt-3 ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>${pkg.price}</p>
                         </button>
                       )
                     })}
