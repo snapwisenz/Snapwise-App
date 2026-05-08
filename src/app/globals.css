@@ -10,12 +10,12 @@
 @config "../../tailwind.config.ts";
 
 @theme {
-  --color-primary: #8e3e9d;
-  --color-secondary: #f43f5e; /* Coral/Rose */
-  --color-accent: #0ea5e9; /* Sky/Teal */
-  --color-success: #47a96d;
-  --color-warning: #eba834;
-  --color-error: #ee6a41;
+  --color-primary: #953fa6;
+  --color-secondary: #eb6e41; /* Coral */
+  --color-accent: #b8d64e; /* Lime */
+  --color-success: #42b36e; /* Green */
+  --color-warning: #eaaa34; /* Yellow */
+  --color-error: #eb6e41; /* Coral/Red */
   --color-background-light: #fef8e0; /* Warm light yellow/cream */
   --color-background-dark: #fef8e0; /* Forced light mode */
   --color-neutral-soft: #f1f5f9; /* Slate 100 */
