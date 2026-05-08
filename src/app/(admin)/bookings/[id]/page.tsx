@@ -150,7 +150,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-success/5 shadow-sm flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                    <span className="material-symbols-outlined">directions_car</span>
+                    <span className="material-icons-outlined">directions_car</span>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">From Previous Shoot</p>
@@ -159,7 +159,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                 </div>
                 <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-success/5 shadow-sm flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                    <span className="material-symbols-outlined">near_me</span>
+                    <span className="material-icons-outlined">near_me</span>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">To Next Shoot</p>
@@ -193,7 +193,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                 <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                   <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-success/10 shadow-xl flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center text-success">
-                      <span className="material-symbols-outlined text-sm">location_on</span>
+                      <span className="material-icons-outlined text-sm">location_on</span>
                     </div>
                     <div>
                       <p className="text-[9px] uppercase font-bold text-slate-400 leading-none mb-1">Current Location</p>
@@ -203,10 +203,10 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                   
                   <div className="flex gap-2">
                     <button className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-lg shadow-lg flex items-center justify-center text-slate-600 hover:text-success transition-colors border border-success/10">
-                      <span className="material-symbols-outlined">add</span>
+                      <span className="material-icons-outlined">add</span>
                     </button>
                     <button className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-lg shadow-lg flex items-center justify-center text-slate-600 hover:text-success transition-colors border border-success/10">
-                      <span className="material-symbols-outlined">remove</span>
+                      <span className="material-icons-outlined">remove</span>
                     </button>
                   </div>
                 </div>
