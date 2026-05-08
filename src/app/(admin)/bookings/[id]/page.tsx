@@ -9,7 +9,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-col">
             <nav className="flex items-center gap-2 mb-1 text-sm text-slate-500 dark:text-slate-400">
-              <Link href="/jobs" className="hover:text-primary transition-colors flex items-center gap-1">
+              <Link href="/bookings" className="hover:text-primary transition-colors flex items-center gap-1">
                 <span className="material-icons-outlined text-sm">arrow_back</span>
                 Back to Bookings
               </Link>

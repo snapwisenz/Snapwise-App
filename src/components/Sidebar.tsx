@@ -9,7 +9,7 @@ export default function Sidebar() {
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard', colorClass: 'primary' },
     { name: 'Tasks', href: '/tasks', icon: 'assignment', colorClass: 'warning' },
-    { name: 'Jobs', href: '/jobs', icon: 'calendar_today', colorClass: 'success' },
+    { name: 'Bookings', href: '/bookings', icon: 'calendar_today', colorClass: 'success' },
     { name: 'Agencies', href: '/agencies', icon: 'business', colorClass: 'secondary' },
     { name: 'Team', href: '/team', icon: 'groups', colorClass: 'accent' },
   ];

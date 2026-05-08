@@ -12,7 +12,7 @@ export default function DashboardPage() {
           <p className="text-slate-500 mt-2">Welcome back, Jordan. Here is your schedule for the day.</p>
         </div>
         <Link 
-          href="/jobs/new"
+          href="/bookings/new"
           className="bg-primary hover:opacity-90 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95"
         >
           <span className="material-icons">add_circle</span>
@@ -23,7 +23,7 @@ export default function DashboardPage() {
       {/* Current Bookings Grid */}
       <div>
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-[22px] font-bold heading-font text-slate-900 dark:text-white">Upcoming Jobs</h2>
+          <h2 className="text-[22px] font-bold heading-font text-slate-900 dark:text-white">Upcoming Bookings</h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -66,7 +66,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex-grow"></div>
-              <Link href="/jobs/1" className="w-full py-3 bg-neutral-soft dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-colors text-center block">View Booking</Link>
+              <Link href="/bookings/1" className="w-full py-3 bg-neutral-soft dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-colors text-center block">View Booking</Link>
             </div>
           </div>
 
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex-grow"></div>
-              <Link href="/jobs/2" className="w-full py-3 bg-neutral-soft dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-colors text-center block">View Booking</Link>
+              <Link href="/bookings/2" className="w-full py-3 bg-neutral-soft dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-colors text-center block">View Booking</Link>
             </div>
           </div>
 
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex-grow"></div>
-              <Link href="/jobs/3" className="w-full py-3 bg-neutral-soft dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-colors text-center block">View Booking</Link>
+              <Link href="/bookings/3" className="w-full py-3 bg-neutral-soft dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-colors text-center block">View Booking</Link>
             </div>
           </div>
         </div>
