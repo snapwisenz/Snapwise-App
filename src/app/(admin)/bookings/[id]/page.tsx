@@ -170,27 +170,23 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
 
               {/* Interactive Map View */}
               <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm overflow-hidden h-80 relative">
-                {/* Placeholder for interactive map */}
-                <div className="w-full h-full bg-[#e5e7eb] dark:bg-slate-800 relative overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnqB17I6v6t6_N2UjW3wN_v9Xm_0zQ9w6L0X0Z9M8O7L5K4J3I2H1G0F9E8D7C6B5A4" alt="Map of Beverly Hills area" className="w-full h-full object-cover opacity-80" />
-                  
-                  {/* Map Marker */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="relative">
-                      <div className="w-10 h-10 bg-success rounded-full flex items-center justify-center text-white shadow-xl animate-bounce">
-                        <span className="material-icons-outlined">home</span>
-                      </div>
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-black/20 rounded-full blur-sm"></div>
-                    </div>
-                  </div>
-                </div>
+                {/* Google Map Embed */}
+                <iframe
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent('1234 Maple Drive, Beverly Hills, CA 90210')}`}
+                  className="absolute inset-0"
+                ></iframe>
                 
-                <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg text-[10px] font-bold uppercase tracking-widest text-success border border-success/20">
+                <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg text-[10px] font-bold uppercase tracking-widest text-success border border-success/20 pointer-events-none">
                   Interactive Map
                 </div>
                 
-                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
                   <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-success/10 shadow-xl flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center text-success">
                       <span className="material-icons-outlined text-sm">location_on</span>
@@ -199,15 +195,6 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                       <p className="text-[9px] uppercase font-bold text-slate-400 leading-none mb-1">Current Location</p>
                       <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Beverly Hills, CA 90210</p>
                     </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-lg shadow-lg flex items-center justify-center text-slate-600 hover:text-success transition-colors border border-success/10">
-                      <span className="material-icons-outlined">add</span>
-                    </button>
-                    <button className="w-10 h-10 bg-white/90 dark:bg-slate-900/90 rounded-lg shadow-lg flex items-center justify-center text-slate-600 hover:text-success transition-colors border border-success/10">
-                      <span className="material-icons-outlined">remove</span>
-                    </button>
                   </div>
                 </div>
               </div>
