@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Script from 'next/script';
+import { createClient } from '@/utils/supabase/client';
 
 export default function NewJobPage() {
   const [address, setAddress] = useState('');
@@ -31,6 +32,50 @@ export default function NewJobPage() {
     virtualStagingQty: '',
     virtualStagingNotes: '',
   });
+
+  const [pricingSettings, setPricingSettings] = useState({
+    ground_photo_price: 10,
+    drone_photo_price: 15,
+    reel_price: 50,
+    twilight_photo_price: 25,
+    video_basic_price: 150,
+    video_standard_price: 250,
+    video_premium_price: 350,
+    video_ai_price: 200,
+    site_plan_price: 50,
+    floorplan_price: 75,
+    matterport_price: 100,
+    virtual_staging_price: 30,
+  });
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchPricing() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.from('agency_settings').select('*').eq('user_id', session.user.id).single();
+      if (data) setPricingSettings(prev => ({ ...prev, ...data }));
+    }
+    fetchPricing();
+  }, [supabase]);
+
+  const customPrice = useMemo(() => {
+    return (
+      (Number(customOptions.groundPhotos) || 0) * pricingSettings.ground_photo_price +
+      (Number(customOptions.drone) || 0) * pricingSettings.drone_photo_price +
+      (Number(customOptions.reels) || 0) * pricingSettings.reel_price +
+      (Number(customOptions.twilight) || 0) * pricingSettings.twilight_photo_price +
+      (customOptions.video === 'basic' ? pricingSettings.video_basic_price :
+       customOptions.video === 'standard' ? pricingSettings.video_standard_price :
+       customOptions.video === 'premium' ? pricingSettings.video_premium_price :
+       customOptions.video === 'ai' ? pricingSettings.video_ai_price : 0) +
+      (customOptions.sitePlan ? pricingSettings.site_plan_price : 0) +
+      (customOptions.floorplan ? pricingSettings.floorplan_price : 0) +
+      (customOptions.matterport ? pricingSettings.matterport_price : 0) +
+      (Number(customOptions.virtualStagingQty) || 0) * pricingSettings.virtual_staging_price
+    );
+  }, [customOptions, pricingSettings]);
 
   // Mock previous job address for demo
   const PREVIOUS_JOB = "123 Main St, Los Angeles, CA";
@@ -246,7 +291,7 @@ export default function NewJobPage() {
                           </div>
                           <p className="font-bold text-sm text-primary">Custom Package</p>
                           <p className="text-xs text-slate-500 mt-1 line-clamp-1" title={selectedPackage.photos || 'Custom'}>2hr • {selectedPackage.photos || 'Custom'}</p>
-                          <p className="font-bold text-sm mt-3 text-primary">TBD</p>
+                          <p className="font-bold text-sm mt-3 text-primary">{selectedPackage.price}</p>
                         </>
                       ) : (
                         <>
@@ -572,7 +617,10 @@ export default function NewJobPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Custom Package</h2>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Custom Package</h2>
+                <p className="text-sm font-semibold text-primary mt-1">Live Estimate: ${customPrice.toFixed(2)}</p>
+              </div>
               <button type="button" onClick={() => setShowCustomModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                 <span className="material-icons-outlined">close</span>
               </button>
@@ -730,7 +778,7 @@ export default function NewJobPage() {
                     setSelectedPackage({
                       name: 'Custom Package',
                       duration: 2, // arbitrary
-                      price: 'TBD',
+                      price: `$${customPrice.toFixed(2)}`,
                       photos: parts.join(', ') || 'Custom Selection'
                     });
                     setShowCustomModal(false);
