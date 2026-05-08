@@ -30,23 +30,34 @@ export default function AgenciesPage() {
   });
 
   const fetchData = async () => {
-    setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLoading(false);
+        return;
+      }
 
-    const [resAgencies, resSubAgencies, resAgents, resPackages] = await Promise.all([
-      supabase.from('agencies').select('*').order('created_at', { ascending: false }),
-      supabase.from('sub_agencies').select('*').order('created_at', { ascending: false }),
-      supabase.from('agents').select('*').order('created_at', { ascending: false }),
-      supabase.from('packages').select('*').order('created_at', { ascending: false })
-    ]);
+      const [resAgencies, resSubAgencies, resAgents, resPackages] = await Promise.all([
+        supabase.from('agencies').select('*').order('created_at', { ascending: false }),
+        supabase.from('sub_agencies').select('*').order('created_at', { ascending: false }),
+        supabase.from('agents').select('*').order('created_at', { ascending: false }),
+        supabase.from('packages').select('*').order('created_at', { ascending: false })
+      ]);
 
-    if (resAgencies.data) setAgencies(resAgencies.data);
-    if (resSubAgencies.data) setSubAgencies(resSubAgencies.data);
-    if (resAgents.data) setAgents(resAgents.data);
-    if (resPackages.data) setPackages(resPackages.data);
+      if (resAgencies.data) setAgencies(resAgencies.data);
+      if (resSubAgencies.data) setSubAgencies(resSubAgencies.data);
+      if (resAgents.data) setAgents(resAgents.data);
+      if (resPackages.data) setPackages(resPackages.data);
+      
+      if (resAgencies.error) console.error("Agencies Error:", resAgencies.error);
+      if (resPackages.error) console.error("Packages Error:", resPackages.error);
 
-    setLoading(false);
+    } catch (err) {
+      console.error("Fetch Data Error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
