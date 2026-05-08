@@ -64,9 +64,15 @@ export default function AgenciesPage() {
 
   const handleAddAgency = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAgencyName.trim()) return;
+    if (!newAgencyName.trim()) {
+      alert("Please enter an agency name.");
+      return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      alert("Error: You are not logged in. Please log in first.");
+      return;
+    }
 
     const { data: agencyData, error } = await supabase.from('agencies').insert([{ name: newAgencyName, user_id: session.user.id }]).select();
     
@@ -79,7 +85,7 @@ export default function AgenciesPage() {
       setNewAgencyLocation('');
       setShowAgencyModal(false);
       
-      router.push(`/agencies/${agencyData[0].id}`);
+      window.location.href = `/agencies/${agencyData[0].id}`;
     } else {
       console.error("Error creating agency:", error);
       alert("Error creating agency: " + (error?.message || "Unknown error"));
