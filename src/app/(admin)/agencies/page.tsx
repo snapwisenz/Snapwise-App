@@ -37,8 +37,12 @@ export default function AgenciesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn("No active user found during fetchData");
+        setLoading(false);
+        return;
+      }
 
       const [resAgencies, resSubAgencies, resAgents, resPackages] = await Promise.all([
         supabase.from('agencies').select('*').order('created_at', { ascending: false }),
@@ -69,13 +73,15 @@ export default function AgenciesPage() {
       alert("Please enter an agency name.");
       return;
     }
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
       alert("Error: You are not logged in. Please log in first.");
       return;
     }
 
-    const { data: agencyData, error } = await supabase.from('agencies').insert([{ name: newAgencyName, user_id: session.user.id }]).select();
+    const { data: agencyData, error } = await supabase.from('agencies').insert([{ name: newAgencyName, user_id: user.id }]).select();
     
     if (!error && agencyData && agencyData.length > 0) {
       if (newAgencyLocation.trim()) {

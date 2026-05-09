@@ -60,12 +60,12 @@ export default function NewJobPage() {
 
   useEffect(() => {
     async function fetchPricingAndAgencies() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
       
       const [pricingRes, agenciesRes, subAgenciesRes] = await Promise.all([
-        supabase.from('agency_settings').select('*').eq('user_id', session.user.id).single(),
-        supabase.from('agencies').select('*').eq('user_id', session.user.id),
+        supabase.from('agency_settings').select('*').eq('user_id', user.id).single(),
+        supabase.from('agencies').select('*').eq('user_id', user.id),
         supabase.from('sub_agencies').select('*')
       ]);
 
@@ -202,8 +202,8 @@ export default function NewJobPage() {
     
     setIsSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("No active session");
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error("No active session");
       
       const subAgency = subAgenciesList.find(s => s.id === selectedAgency);
       
@@ -234,7 +234,7 @@ export default function NewJobPage() {
       startDate.setHours(9, 0, 0, 0);
 
       const { error } = await supabase.from('bookings').insert([{
-        user_id: session.user.id,
+        user_id: user.id,
         agency_id: subAgency?.agency_id || null,
         sub_agency_id: selectedAgency,
         agent_id: selectedAgent,

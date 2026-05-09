@@ -82,11 +82,13 @@ function NewAgentForm() {
       }));
       
       // Get current user id for packages
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const finalPackages = packagesToInsert.map(p => ({ ...p, user_id: session.user.id }));
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (user) {
+        const finalPackages = packagesToInsert.map(p => ({ ...p, user_id: user.id }));
         const { error: pkgError } = await supabase.from('packages').insert(finalPackages);
         if (pkgError) console.error('Error saving packages:', pkgError);
+      } else {
+        console.error('Auth error fetching user:', authError);
       }
     }
 

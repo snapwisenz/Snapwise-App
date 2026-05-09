@@ -47,8 +47,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     async function loadSettings() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         setLoading(false);
         return;
       }
@@ -56,7 +56,7 @@ export default function SettingsPage() {
       const { data, error } = await supabase
         .from('agency_settings')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .single();
         
       if (data) {
@@ -73,8 +73,8 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       alert('You must be logged in');
       setSaving(false);
       return;
@@ -83,7 +83,7 @@ export default function SettingsPage() {
     const { error } = await supabase
       .from('agency_settings')
       .upsert({ 
-        user_id: session.user.id, 
+        user_id: user.id, 
         ground_photo_price: settings.ground_photo_price,
         drone_photo_price: settings.drone_photo_price,
         reel_price: settings.reel_price,
