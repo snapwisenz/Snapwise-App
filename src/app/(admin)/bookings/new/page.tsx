@@ -10,6 +10,7 @@ export default function NewJobPage() {
   const [travelTime, setTravelTime] = useState<{ raw: number; rounded: number } | null>(null);
   const [loadingRouting, setLoadingRouting] = useState(false);
   const [overlapWarning, setOverlapWarning] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Cascading State Management
   const [selectedAgency, setSelectedAgency] = useState(''); // Stores sub_agency_id
@@ -193,7 +194,72 @@ export default function NewJobPage() {
     }
   };
 
+  const handleSaveBooking = async () => {
+    if (!address || !selectedAgent || !selectedPackage) {
+      alert("Please ensure Address, Agent, and Package are selected.");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No active session");
+      
+      const subAgency = subAgenciesList.find(s => s.id === selectedAgency);
+      
+      // Determine deliverables
+      let deliverables = [];
+      if (selectedPackage.name === 'Custom Package') {
+        if (customOptions.groundPhotos) deliverables.push({ name: 'Ground Photos', qty: customOptions.groundPhotos, status: 'missing' });
+        if (customOptions.drone) deliverables.push({ name: 'Drone Photos', qty: customOptions.drone, status: 'missing' });
+        if (customOptions.reels) deliverables.push({ name: 'Reels', qty: customOptions.reels, status: 'missing' });
+        if (customOptions.twilight) deliverables.push({ name: 'Twilight Photos', qty: customOptions.twilight, status: 'missing' });
+        if (customOptions.video) deliverables.push({ name: 'Video', type: customOptions.video, status: 'missing' });
+        if (customOptions.sitePlan) deliverables.push({ name: 'Site Plan', status: 'missing' });
+        if (customOptions.floorplan) deliverables.push({ name: 'Floorplan', status: 'missing' });
+        if (customOptions.matterport) deliverables.push({ name: 'Matterport', status: 'missing' });
+        if (customOptions.virtualStaging) deliverables.push({ name: 'Virtual Staging', qty: customOptions.virtualStagingQty, notes: customOptions.virtualStagingNotes, status: 'missing' });
+      } else {
+        // Fallback or standard package logic could go here
+        deliverables.push({ name: selectedPackage.name, status: 'missing' });
+      }
 
+      // We use a dummy package_id if it's custom, otherwise we find the real package ID.
+      const matchedPackage = packages.find(p => p.name === selectedPackage.name);
+      const packageId = matchedPackage ? matchedPackage.id : null;
+
+      // Arbitrary start time tomorrow 9 AM for demo
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+      startDate.setHours(9, 0, 0, 0);
+
+      const { error } = await supabase.from('bookings').insert([{
+        user_id: session.user.id,
+        agency_id: subAgency?.agency_id || null,
+        sub_agency_id: selectedAgency,
+        agent_id: selectedAgent,
+        package_id: packageId,
+        shoot_location: address,
+        start_time: startDate.toISOString(),
+        status: 'pending',
+        deliverables: deliverables,
+        notes: "Generated from UI"
+      }]);
+
+      if (error) {
+        console.error("Error saving booking:", error);
+        alert("Failed to save booking. Check console for details.");
+      } else {
+        alert("Booking finalized successfully!");
+        window.location.href = '/dashboard'; // Redirect to dashboard
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An unexpected error occurred.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <>
@@ -614,8 +680,12 @@ export default function NewJobPage() {
               <button className="flex-1 border border-slate-200 dark:border-slate-700 py-4 rounded-full font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all">
                 Save as Draft
               </button>
-              <button className="flex-1 bg-primary text-white py-4 rounded-full font-bold hover:shadow-xl hover:shadow-primary/30 transition-all">
-                Finalize Booking
+              <button 
+                onClick={handleSaveBooking}
+                disabled={isSaving}
+                className="flex-1 bg-primary text-white py-4 rounded-full font-bold hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-50"
+              >
+                {isSaving ? 'Finalizing...' : 'Finalize Booking'}
               </button>
             </div>
           </div>
