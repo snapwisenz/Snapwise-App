@@ -286,21 +286,54 @@ export default function AgenciesPage() {
 
         {/* Add Agency Modal */}
         {showAgencyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800">
-              <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">New Agency</h2>
-              <form onSubmit={handleAddAgency} className="space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 transition-all duration-300">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Agency Name</label>
-                  <input type="text" value={newAgencyName} onChange={e => setNewAgencyName(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" required placeholder="e.g. Ray White" />
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">New Agency</h2>
+                  <p className="text-sm text-slate-500 mt-1">Establish a new agency relationship</p>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Primary Location / Branch</label>
-                  <input type="text" value={newAgencyLocation} onChange={e => setNewAgencyLocation(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" placeholder="e.g. Nelson, NZ" />
+                <button onClick={() => setShowAgencyModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                  <span className="material-icons">close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleAddAgency} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Agency Name</label>
+                  <input 
+                    type="text" 
+                    value={newAgencyName} 
+                    onChange={e => setNewAgencyName(e.target.value)} 
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400" 
+                    required 
+                    placeholder="e.g. Ray White Realty" 
+                  />
                 </div>
-                <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setShowAgencyModal(false)} className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300">Cancel</button>
-                  <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-xl font-bold">Create Agency</button>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Primary Location / Branch</label>
+                  <input 
+                    type="text" 
+                    value={newAgencyLocation} 
+                    onChange={e => setNewAgencyLocation(e.target.value)} 
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400" 
+                    placeholder="e.g. Nelson, NZ" 
+                  />
+                </div>
+                <div className="pt-6 flex gap-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAgencyModal(false)} 
+                    className="flex-1 px-6 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="flex-1 px-6 py-3.5 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98]"
+                  >
+                    Create Agency
+                  </button>
                 </div>
               </form>
             </div>
@@ -309,100 +342,131 @@ export default function AgenciesPage() {
 
         {/* Add Package Modal */}
         {showPackageModal && packageContext && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col">
-              <div className="flex-shrink-0">
-                <h2 className="text-xl font-bold mb-1 text-slate-900 dark:text-white">Add Custom Package</h2>
-                <p className="text-xs text-slate-500 mb-4">Will apply to: <span className="font-bold">{packageContext.name}</span></p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col transition-all duration-300">
+              <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Add Custom Package</h2>
+                  <p className="text-sm text-slate-500 mt-1">Applying to: <span className="font-bold text-primary">{packageContext.name}</span></p>
+                </div>
+                <button onClick={() => setShowPackageModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400">
+                  <span className="material-icons">close</span>
+                </button>
               </div>
               
-              {/* List existing packages for this context */}
-              <div className="mb-6 space-y-2 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-40">
-                <h3 className="text-xs font-bold text-slate-500 uppercase sticky top-0 bg-white dark:bg-slate-900 pb-1 z-10">Existing Packages</h3>
-                {packages.filter(p => packageContext.type === 'agent' ? p.agent_id === packageContext.id : p.agency_id === packageContext.id).map(pkg => (
-                  <div key={pkg.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
-                    <div>
-                      <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{pkg.name}</div>
-                      <div className="text-xs text-slate-500">${pkg.price} • {pkg.ground_photos_qty || 0} photos</div>
-                    </div>
-                    <button onClick={() => handleDeletePackage(pkg.id)} className="text-slate-400 hover:text-error">
-                      <span className="material-icons-outlined text-sm">delete</span>
-                    </button>
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8">
+                {/* List existing packages for this context */}
+                <div className="space-y-4">
+                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Existing Packages</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {packages.filter(p => packageContext.type === 'agent' ? p.agent_id === packageContext.id : p.agency_id === packageContext.id).map(pkg => (
+                      <div key={pkg.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-primary/30 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                            <span className="material-icons text-sm">inventory_2</span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{pkg.name}</div>
+                            <div className="text-[10px] font-bold text-primary uppercase tracking-tighter">${pkg.price} • {pkg.ground_photos_qty || 0} photos</div>
+                          </div>
+                        </div>
+                        <button onClick={() => handleDeletePackage(pkg.id)} className="p-1.5 text-slate-300 hover:text-error hover:bg-error/5 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                          <span className="material-icons text-sm">delete</span>
+                        </button>
+                      </div>
+                    ))}
+                    {packages.filter(p => packageContext.type === 'agent' ? p.agent_id === packageContext.id : p.agency_id === packageContext.id).length === 0 && (
+                      <div className="col-span-2 text-sm text-slate-400 italic py-4 text-center bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                        No custom packages defined yet.
+                      </div>
+                    )}
                   </div>
-                ))}
-                {packages.filter(p => packageContext.type === 'agent' ? p.agent_id === packageContext.id : p.agency_id === packageContext.id).length === 0 && (
-                  <div className="text-xs text-slate-400 italic">No custom packages yet.</div>
-                )}
-              </div>
+                </div>
 
-              <form onSubmit={handleAddPackage} className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-4 flex-shrink-0">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Package Name</label>
-                  <input type="text" value={newPackage.name} onChange={e => setNewPackage({...newPackage, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" required placeholder="e.g. Premium Deal" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Flat Price ($)</label>
-                  <input type="number" value={newPackage.price} onChange={e => setNewPackage({...newPackage, price: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" required placeholder="199" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Photos Qty</label>
-                    <input type="number" value={newPackage.ground_photos_qty} onChange={e => setNewPackage({...newPackage, ground_photos_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Drone Qty</label>
-                    <input type="number" value={newPackage.drone_qty} onChange={e => setNewPackage({...newPackage, drone_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Reels Qty</label>
-                    <input type="number" value={newPackage.reels_qty} onChange={e => setNewPackage({...newPackage, reels_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">Twilight Qty</label>
-                    <input type="number" value={newPackage.twilight_qty} onChange={e => setNewPackage({...newPackage, twilight_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1">Video Type</label>
-                  <select value={newPackage.video_package} onChange={e => setNewPackage({...newPackage, video_package: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm">
-                    <option value="">None</option>
-                    <option value="basic">Basic Video</option>
-                    <option value="standard">Standard Video</option>
-                    <option value="premium">Premium Video</option>
-                    <option value="ai">AI Video</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-3 gap-x-4 gap-y-2 mt-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={newPackage.site_plan} onChange={e => setNewPackage({...newPackage, site_plan: e.target.checked})} className="rounded text-primary focus:ring-primary" />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Site Plan</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={newPackage.floorplan} onChange={e => setNewPackage({...newPackage, floorplan: e.target.checked})} className="rounded text-primary focus:ring-primary" />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Floorplan</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={newPackage.matterport} onChange={e => setNewPackage({...newPackage, matterport: e.target.checked})} className="rounded text-primary focus:ring-primary" />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Matterport</span>
-                  </label>
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <label className="flex items-center gap-2 cursor-pointer flex-1">
-                    <input type="checkbox" checked={newPackage.virtual_staging} onChange={e => setNewPackage({...newPackage, virtual_staging: e.target.checked})} className="rounded text-primary focus:ring-primary" />
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Virtual Staging</span>
-                  </label>
-                  {newPackage.virtual_staging && (
-                    <div className="flex-1 flex items-center gap-2">
-                      <span className="text-xs text-slate-500 font-semibold">Qty:</span>
-                      <input type="number" value={newPackage.virtual_staging_qty} onChange={e => setNewPackage({...newPackage, virtual_staging_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1 text-sm" />
+                {/* Form to add new package */}
+                <form onSubmit={handleAddPackage} className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Package Details</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Package Name</label>
+                      <input type="text" value={newPackage.name} onChange={e => setNewPackage({...newPackage, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" required placeholder="e.g. Premium Deal" />
                     </div>
-                  )}
-                </div>
-                <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setShowPackageModal(false)} className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 text-sm">Close</button>
-                  <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm">Save Package</button>
-                </div>
-              </form>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Flat Price ($)</label>
+                      <input type="number" value={newPackage.price} onChange={e => setNewPackage({...newPackage, price: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" required placeholder="199" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Photos</label>
+                      <input type="number" value={newPackage.ground_photos_qty} onChange={e => setNewPackage({...newPackage, ground_photos_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Drone</label>
+                      <input type="number" value={newPackage.drone_qty} onChange={e => setNewPackage({...newPackage, drone_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Reels</label>
+                      <input type="number" value={newPackage.reels_qty} onChange={e => setNewPackage({...newPackage, reels_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Twilight</label>
+                      <input type="number" value={newPackage.twilight_qty} onChange={e => setNewPackage({...newPackage, twilight_qty: Number(e.target.value)})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Video Type</label>
+                      <select value={newPackage.video_package} onChange={e => setNewPackage({...newPackage, video_package: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none">
+                        <option value="">None</option>
+                        <option value="basic">Basic Video</option>
+                        <option value="standard">Standard Video</option>
+                        <option value="premium">Premium Video</option>
+                        <option value="ai">AI Video</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col justify-end gap-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="flex items-center gap-2 cursor-pointer p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-700">
+                          <input type="checkbox" checked={newPackage.site_plan} onChange={e => setNewPackage({...newPackage, site_plan: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                          <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Site Plan</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-700">
+                          <input type="checkbox" checked={newPackage.floorplan} onChange={e => setNewPackage({...newPackage, floorplan: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                          <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Floorplan</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <input type="checkbox" checked={newPackage.matterport} onChange={e => setNewPackage({...newPackage, matterport: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Matterport</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl transition-colors hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <input type="checkbox" checked={newPackage.virtual_staging} onChange={e => setNewPackage({...newPackage, virtual_staging: e.target.checked})} className="rounded text-primary focus:ring-primary" />
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Virtual Staging</span>
+                      </label>
+                    </div>
+                    {newPackage.virtual_staging && (
+                      <div className="flex items-center gap-3 bg-primary/5 p-3 rounded-2xl border border-primary/20 transition-all">
+                        <span className="text-xs text-primary font-bold uppercase tracking-wider">Qty:</span>
+                        <input type="number" value={newPackage.virtual_staging_qty} onChange={e => setNewPackage({...newPackage, virtual_staging_qty: Number(e.target.value)})} className="w-full bg-white dark:bg-slate-900 border border-primary/20 rounded-xl px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-6 flex gap-4">
+                    <button type="button" onClick={() => setShowPackageModal(false)} className="flex-1 px-6 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm">Close</button>
+                    <button type="submit" className="flex-1 px-6 py-3.5 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98] text-sm">Save Package</button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
