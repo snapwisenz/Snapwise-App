@@ -147,7 +147,7 @@ export default function DashboardPage() {
         </div>
         <Link href="/bookings/new" className="bg-secondary-container text-on-secondary-container px-gutter py-3 rounded-full font-label-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all w-fit">
           <span className="material-symbols-outlined font-[100]" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>
-          + Quick Book
+          New Booking
         </Link>
       </header>
 
