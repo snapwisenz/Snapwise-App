@@ -62,9 +62,24 @@ function NewAgentForm() {
     }
 
     setSaving(true);
+    
+    // STRICT AUTH CHECK
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Auth error fetching user:', authError);
+      alert('Error: You are not logged in. Please log in first.');
+      setSaving(false);
+      return;
+    }
+
+    const agentPayload = {
+      ...formData,
+      user_id: user.id
+    };
+
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .insert([formData])
+      .insert([agentPayload])
       .select()
       .single();
 
@@ -78,18 +93,11 @@ function NewAgentForm() {
       const packagesToInsert = addedPackages.map(pkg => ({
         ...pkg,
         agent_id: agent.id,
-        user_id: (agent as any).user_id || null // This will be handled by DB trigger or we can fetch it
+        user_id: user.id
       }));
       
-      // Get current user id for packages
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (user) {
-        const finalPackages = packagesToInsert.map(p => ({ ...p, user_id: user.id }));
-        const { error: pkgError } = await supabase.from('packages').insert(finalPackages);
-        if (pkgError) console.error('Error saving packages:', pkgError);
-      } else {
-        console.error('Auth error fetching user:', authError);
-      }
+      const { error: pkgError } = await supabase.from('packages').insert(packagesToInsert);
+      if (pkgError) console.error('Error saving packages:', pkgError);
     }
 
     router.push('/agencies');

@@ -43,6 +43,7 @@ export default function SettingsPage() {
     matterport_price: 100,
     virtual_staging_price: 30,
     custom_pricing_rules: [] as PricingRule[],
+    isCalendarConnected: false,
   });
 
   useEffect(() => {
@@ -59,11 +60,23 @@ export default function SettingsPage() {
         .eq('user_id', user.id)
         .single();
         
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('nylas_grant_id')
+        .eq('id', user.id)
+        .single();
+
       if (data) {
         setSettings({
           ...settings,
           ...data,
-          custom_pricing_rules: data.custom_pricing_rules || []
+          custom_pricing_rules: data.custom_pricing_rules || [],
+          isCalendarConnected: !!profileData?.nylas_grant_id
+        });
+      } else if (profileData) {
+        setSettings({
+          ...settings,
+          isCalendarConnected: !!profileData?.nylas_grant_id
         });
       }
       setLoading(false);
@@ -161,6 +174,44 @@ export default function SettingsPage() {
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
+        </div>
+
+        {/* Calendar Sync */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 dark:border-slate-700 mb-8">
+          <section>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-primary mb-6 flex items-center gap-2">
+              <span className="material-icons-outlined text-base">event</span> Calendar Sync
+            </h2>
+            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-slate-200">Google / Outlook Calendar</h3>
+                <p className="text-sm text-slate-500 mt-1">Sync your bookings directly to your personal calendar.</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className={`w-2.5 h-2.5 rounded-full ${settings.isCalendarConnected ? 'bg-success' : 'bg-slate-400'}`}></div>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {settings.isCalendarConnected ? 'Connected' : 'Not Connected'}
+                  </span>
+                </div>
+              </div>
+              <div>
+                {settings.isCalendarConnected ? (
+                  <button 
+                    onClick={() => { /* Disconnect logic here if needed */ }}
+                    className="px-6 py-2.5 rounded-full border border-error text-error font-bold hover:bg-error/10 transition-colors text-sm"
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <a 
+                    href="/api/nylas/auth"
+                    className="px-6 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold hover:opacity-90 transition-opacity text-sm inline-block"
+                  >
+                    Connect Calendar
+                  </a>
+                )}
+              </div>
+            </div>
+          </section>
         </div>
 
         {/* Pricing Form */}
