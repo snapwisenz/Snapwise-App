@@ -59,24 +59,13 @@ export default function SettingsPage() {
         .select('*')
         .eq('user_id', user.id)
         .single();
-        
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('nylas_grant_id')
-        .eq('id', user.id)
-        .single();
 
       if (data) {
         setSettings({
           ...settings,
           ...data,
           custom_pricing_rules: data.custom_pricing_rules || [],
-          isCalendarConnected: !!profileData?.nylas_grant_id
-        });
-      } else if (profileData) {
-        setSettings({
-          ...settings,
-          isCalendarConnected: !!profileData?.nylas_grant_id
+          isCalendarConnected: !!data.nylas_grant_id
         });
       }
       setLoading(false);

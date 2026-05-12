@@ -30,12 +30,12 @@ export async function GET(request: Request) {
     }
 
     const { error } = await supabase
-      .from('profiles')
-      .update({
+      .from('agency_settings')
+      .upsert({
+        user_id: user.id,
         nylas_grant_id: grantId,
-        nylas_account_id: grantId, // In v3, grantId often replaces accountId, keeping both for schema
-      })
-      .eq('id', user.id);
+        nylas_account_id: grantId,
+      }, { onConflict: 'user_id' });
 
     if (error) {
       console.error('Error saving grant ID to Supabase:', error);
