@@ -1,0 +1,302 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+
+export default function ProfileSettingsPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    home_address: '',
+    role_title: '',
+    custom_rules: '',
+    avatar_url: ''
+  });
+
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        if (profile) {
+          setFormData({
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            email: profile.email || user.email || '',
+            home_address: profile.home_address || '',
+            role_title: profile.role_title || '',
+            custom_rules: profile.custom_rules || '',
+            avatar_url: profile.avatar_url || ''
+          });
+        }
+      }
+    }
+    loadProfile();
+  }, [supabase]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      if (!e.target.files || e.target.files.length === 0) {
+        throw new Error('You must select an image to upload.');
+      }
+
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      // Prefix with user ID to comply with RLS policies: (storage.foldername(name))[1] = auth.uid()
+      const filePath = `${userId}/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      
+      setFormData((prev) => ({ ...prev, avatar_url: data.publicUrl }));
+      setSuccessMessage('Avatar uploaded successfully. Remember to save changes.');
+
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Error uploading avatar.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectPresetAvatar = (url: string) => {
+    setFormData((prev) => ({ ...prev, avatar_url: url }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      if (!userId) throw new Error('User not authenticated.');
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          home_address: formData.home_address,
+          role_title: formData.role_title,
+          custom_rules: formData.custom_rules,
+          avatar_url: formData.avatar_url
+        })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      setSuccessMessage('Profile updated successfully!');
+      router.refresh();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'An error occurred while saving your profile.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="flex-grow overflow-y-auto p-8 font-display text-slate-800 dark:text-slate-200">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold">Profile Settings</h1>
+        <p className="text-slate-500 mt-2">Manage your personal details and preferences.</p>
+      </header>
+
+      <div className="max-w-4xl bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        
+        {/* Avatar Section */}
+        <div className="p-8 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+          <h2 className="text-lg font-semibold mb-4">Profile Picture</h2>
+          
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
+              {formData.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-icons text-4xl text-primary/50">person</span>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  type="button"
+                >
+                  Upload Custom Image
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleAvatarUpload} 
+                  className="hidden" 
+                  accept="image/*"
+                />
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-slate-500 mb-2">Or choose a preset:</p>
+                <div className="flex items-center gap-3">
+                  {['fun', 'bottts', 'adventurer', 'micah'].map((style) => {
+                    const presetUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${formData.first_name || 'user'}`;
+                    return (
+                      <button 
+                        key={style}
+                        type="button"
+                        onClick={() => selectPresetAvatar(presetUrl)}
+                        className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${formData.avatar_url === presetUrl ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-slate-300'}`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={presetUrl} alt="Preset Avatar" className="w-full h-full object-cover bg-slate-100" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Section */}
+        <div className="p-8">
+          {error && (
+            <div className="bg-error/10 text-error p-4 rounded-lg mb-6 text-sm flex items-center gap-2">
+              <span className="material-icons">error_outline</span>
+              {error}
+            </div>
+          )}
+          {successMessage && (
+            <div className="bg-success/10 text-success p-4 rounded-lg mb-6 text-sm flex items-center gap-2">
+              <span className="material-icons">check_circle</span>
+              {successMessage}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label htmlFor="first_name" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">First Name</label>
+                <input
+                  type="text"
+                  id="first_name"
+                  name="first_name"
+                  required
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="last_name" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Last Name</label>
+                <input
+                  type="text"
+                  id="last_name"
+                  name="last_name"
+                  required
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 focus:outline-none cursor-not-allowed"
+                  readOnly
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="role_title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role Title</label>
+                <input
+                  type="text"
+                  id="role_title"
+                  name="role_title"
+                  value={formData.role_title}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="home_address" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Home Base Address</label>
+              <input
+                type="text"
+                id="home_address"
+                name="home_address"
+                value={formData.home_address}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="custom_rules" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Custom Rules & Preferences</label>
+              <textarea
+                id="custom_rules"
+                name="custom_rules"
+                rows={3}
+                value={formData.custom_rules}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end border-t border-slate-200 dark:border-slate-700 pt-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-primary hover:bg-primary-container text-on-primary font-bold py-2 px-8 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {loading ? (
+                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  );
+}

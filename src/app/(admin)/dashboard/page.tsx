@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState<{temp: number, desc: string, icon: string} | null>(null);
+  const [firstName, setFirstName] = useState<string>('There');
   
   const supabase = createClient();
 
@@ -38,6 +39,15 @@ export default function DashboardPage() {
     async function fetchData() {
       setLoading(true);
       try {
+        // Fetch User Profile
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase.from('profiles').select('first_name').eq('id', user.id).single();
+          if (profile?.first_name) {
+            setFirstName(profile.first_name);
+          }
+        }
+
         // Fetch Bookings
         const { data: jobsData, error: jobsError } = await supabase.from('bookings').select('*, agent:agent_id(name), package:package_id(name)');
         
@@ -124,12 +134,19 @@ export default function DashboardPage() {
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   return (
     <main className="flex-grow overflow-y-auto p-gutter lg:px-lg lg:py-md font-body-md text-on-surface bg-background">
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-end justify-between mb-lg gap-md">
         <div className="space-y-sm">
-          <h1 className="font-h1 text-h1 text-on-surface">Good Morning, Jordan</h1>
+          <h1 className="font-h1 text-h1 text-on-surface">{getGreeting()}, {firstName}</h1>
           <div className="inline-flex bg-surface-container rounded-full p-1 w-fit">
             <button 
               onClick={() => setViewMode('day')}

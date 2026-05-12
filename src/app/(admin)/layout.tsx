@@ -1,8 +1,32 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const supabase = await createClient();
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    redirect('/login');
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.first_name || !profile?.last_name) {
+    redirect('/onboarding');
+  }
+
+  const fullName = `${profile.first_name} ${profile.last_name}`;
+  const roleTitle = profile.role_title || 'User';
+  const avatarUrl = profile.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=random';
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-display text-slate-800 dark:text-slate-200">
       
@@ -25,12 +49,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-semibold">Jordan Smith</p>
-                <p className="text-xs text-slate-500">Ops Manager</p>
+                <p className="text-sm font-semibold">{fullName}</p>
+                <p className="text-xs text-slate-500">{roleTitle}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhjvgV_y9dIhcXaDUO0C_DL5iIDM6xs1cVBYen9KiGtM9jJv0ni7_pR_oK0zPXE4QLr6XV6jf5fmDMftDfnD6wds3jsLziJTSOkKo3U7B77oWwuacfYRNPrvKsfLKeS2rmmOj6TlOTeZ9vZsM1hz7wXlJXo2idCyb0YR7n4OcITDdMU1o1bqfK9m-OOeid-fDPY8aoKljRB8vcp2ZoborC1w84V5X8XEhdiPfnCzLZ4f2tU5AJn4Eiy1o5oHIb4wdUjdJNgh7SREA" alt="User Profile" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="User Profile" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
