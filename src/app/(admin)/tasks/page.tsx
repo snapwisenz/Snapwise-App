@@ -1,7 +1,96 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { DayPicker } from 'react-day-picker';
+
+function DateTimePicker({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  
+  const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
+  const [time, setTime] = useState<string>(
+    value ? format(new Date(value), 'HH:mm') : '09:00'
+  );
+
+  useEffect(() => {
+    if (date) {
+      const [hours, minutes] = time.split(':');
+      const newDate = new Date(date);
+      newDate.setHours(parseInt(hours, 10));
+      newDate.setMinutes(parseInt(minutes, 10));
+      onChange(newDate.toISOString());
+    }
+  }, [date, time]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative w-full" ref={popoverRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left font-medium text-slate-700 dark:text-slate-300"
+      >
+        <div className="flex items-center gap-3">
+          <CalendarIcon className="w-5 h-5 text-slate-500" />
+          <span>{value ? format(new Date(value), 'dd/MM/yyyy, HH:mm') : 'Select date & time'}</span>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-[100] mt-2 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl w-auto min-w-[300px]">
+          <DayPicker
+            mode="single"
+            selected={date}
+            onSelect={(d) => { if (d) setDate(d); }}
+            className="p-0"
+            classNames={{
+              months: "flex flex-col space-y-4",
+              month: "space-y-4",
+              caption: "flex justify-center pt-1 relative items-center",
+              caption_label: "text-sm font-bold text-slate-900 dark:text-white",
+              nav: "space-x-1 flex items-center",
+              nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+              nav_button_previous: "absolute left-1",
+              nav_button_next: "absolute right-1",
+              table: "w-full border-collapse space-y-1",
+              head_row: "flex",
+              head_cell: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
+              row: "flex w-full mt-2",
+              cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+              day: "h-9 w-9 p-0 font-bold aria-selected:opacity-100 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300",
+              day_selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white",
+              day_today: "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50",
+              day_outside: "text-slate-400 opacity-50",
+              day_disabled: "text-slate-400 opacity-50",
+              day_hidden: "invisible",
+            }}
+          />
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
+            <Clock className="w-4 h-4 text-slate-500" />
+            <input 
+              type="time" 
+              value={time} 
+              onChange={(e) => setTime(e.target.value)}
+              className="flex-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary/50 focus:outline-none"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -18,7 +107,6 @@ export default function TasksPage() {
   
   const supabase = createClient();
 
-  // fetch data
   useEffect(() => {
     fetchData();
   }, []);
@@ -28,7 +116,6 @@ export default function TasksPage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
-    // Fetch pending tasks
     const { data: tasksData } = await supabase
       .from('tasks')
       .select('*, bookings(shoot_location), profiles:assignee_id(full_name)')
@@ -37,7 +124,6 @@ export default function TasksPage() {
       
     if (tasksData) setTasks(tasksData);
 
-    // Fetch active/upcoming jobs for the dropdown
     const { data: bookingsData } = await supabase
       .from('bookings')
       .select('id, shoot_location')
@@ -46,7 +132,6 @@ export default function TasksPage() {
 
     if (bookingsData) setBookings(bookingsData);
 
-    // Fetch team members for assignee dropdown
     const { data: teamData } = await supabase
       .from('profiles')
       .select('id, full_name, email')
@@ -58,10 +143,8 @@ export default function TasksPage() {
   }
 
   const handleToggleComplete = async (taskId: string) => {
-    // Optimistic update
     setTasks(prev => prev.filter(t => t.id !== taskId));
     
-    // DB update
     await supabase
       .from('tasks')
       .update({ is_completed: true })
@@ -102,7 +185,7 @@ export default function TasksPage() {
     }
   };
 
-  const formatDueDate = (dateString: string) => {
+  const formatDueDateDisplay = (dateString: string) => {
     const d = new Date(dateString);
     return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
@@ -168,7 +251,7 @@ export default function TasksPage() {
                       {task.due_date && (
                         <span className="text-xs font-bold text-warning flex items-center gap-1 bg-white dark:bg-slate-900 px-3 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                           <span className="material-icons-outlined text-[14px]">event</span>
-                          Due: {formatDueDate(task.due_date)}
+                          Due: {formatDueDateDisplay(task.due_date)}
                         </span>
                       )}
                       {task.assignee_id && (
@@ -205,7 +288,7 @@ export default function TasksPage() {
       {isModalOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="fixed left-[50%] top-[50%] z-50 flex flex-col w-full min-w-[320px] sm:min-w-[400px] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl sm:rounded-lg max-h-[90vh] overflow-y-auto">
+          <div className="fixed left-[50%] top-[50%] z-50 flex flex-col w-full min-w-[320px] sm:min-w-[550px] max-w-xl translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto">
             <div className="pb-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center w-full sticky top-0 bg-white dark:bg-slate-900 z-10">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add New Task</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -251,17 +334,15 @@ export default function TasksPage() {
                 </select>
               </div>
 
-              <div className="flex gap-4 w-full flex-col sm:flex-row">
-                <div className="w-full sm:w-1/2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-2">
+                <div className="w-full">
                   <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Due Date (Optional)</label>
-                  <input 
-                    type="datetime-local" 
+                  <DateTimePicker 
                     value={newTaskDueDate}
-                    onChange={(e) => setNewTaskDueDate(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    onChange={(val) => setNewTaskDueDate(val)}
                   />
                 </div>
-                <div className="w-full sm:w-1/2">
+                <div className="w-full">
                   <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Assign To</label>
                   <select 
                     value={newTaskAssigneeId}
@@ -278,7 +359,7 @@ export default function TasksPage() {
                 </div>
               </div>
 
-              <div className="pt-4 flex w-full gap-3 mt-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="pt-4 flex w-full gap-3 mt-4 border-t border-slate-100 dark:border-slate-800 pt-4">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
