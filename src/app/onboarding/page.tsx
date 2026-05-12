@@ -52,7 +52,7 @@ export default function OnboardingPage() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated.');
 
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from('profiles')
         .update({
           first_name: formData.first_name,
@@ -60,12 +60,16 @@ export default function OnboardingPage() {
           home_address: formData.home_address,
           role_title: formData.role_title,
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (updateError) throw updateError;
+      if (!data || data.length === 0) {
+        throw new Error('Update failed. This might be a database permissions (RLS) issue.');
+      }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Force a full page reload to clear Next.js client-side router caches
+      window.location.href = '/dashboard';
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'An error occurred while saving your profile.');
