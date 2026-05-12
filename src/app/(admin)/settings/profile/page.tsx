@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import Script from 'next/script';
 
 export default function ProfileSettingsPage() {
   const router = useRouter();
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,8 +125,28 @@ export default function ProfileSettingsPage() {
     }
   };
 
+  const initAutocomplete = () => {
+    if (!addressInputRef.current || !window.google) return;
+    
+    const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+      fields: ['formatted_address', 'name'],
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      const newAddress = place.formatted_address || place.name || '';
+      setFormData(prev => ({ ...prev, home_address: newAddress }));
+    });
+  };
+
   return (
-    <main className="flex-grow overflow-y-auto p-8 font-display text-slate-800 dark:text-slate-200">
+    <>
+      <Script 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`} 
+        strategy="lazyOnload" 
+        onLoad={initAutocomplete} 
+      />
+      <main className="flex-grow overflow-y-auto p-8 font-display text-slate-800 dark:text-slate-200">
       <header className="mb-8">
         <h1 className="text-3xl font-bold">Profile Settings</h1>
         <p className="text-slate-500 mt-2">Manage your personal details and preferences.</p>
@@ -260,6 +282,7 @@ export default function ProfileSettingsPage() {
             <div className="space-y-2">
               <label htmlFor="home_address" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Home Base Address</label>
               <input
+                ref={addressInputRef}
                 type="text"
                 id="home_address"
                 name="home_address"
@@ -298,5 +321,6 @@ export default function ProfileSettingsPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

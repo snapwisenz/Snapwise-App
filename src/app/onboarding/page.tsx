@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import Script from 'next/script';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
+  const addressInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,8 +80,28 @@ export default function OnboardingPage() {
     }
   };
 
+  const initAutocomplete = () => {
+    if (!addressInputRef.current || !window.google) return;
+    
+    const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+      fields: ['formatted_address', 'name'],
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      const newAddress = place.formatted_address || place.name || '';
+      setFormData(prev => ({ ...prev, home_address: newAddress }));
+    });
+  };
+
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
+    <>
+      <Script 
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`} 
+        strategy="lazyOnload" 
+        onLoad={initAutocomplete} 
+      />
+      <main className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm w-full max-w-2xl border border-slate-200 dark:border-slate-700">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Welcome to Snapwise!</h1>
@@ -140,6 +162,7 @@ export default function OnboardingPage() {
             <label htmlFor="home_address" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Home Base Address</label>
             <p className="text-xs text-slate-500 mb-1">Used to calculate your driving distances and routes.</p>
             <input
+              ref={addressInputRef}
               type="text"
               id="home_address"
               name="home_address"
@@ -191,5 +214,6 @@ export default function OnboardingPage() {
         </form>
       </div>
     </main>
+    </>
   );
 }
