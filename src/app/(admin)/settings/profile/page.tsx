@@ -18,10 +18,8 @@ export default function ProfileSettingsPage() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    email: '',
     home_address: '',
     role_title: '',
-    custom_rules: '',
     avatar_url: ''
   });
 
@@ -37,10 +35,8 @@ export default function ProfileSettingsPage() {
           setFormData({
             first_name: profile.first_name || '',
             last_name: profile.last_name || '',
-            email: profile.email || user.email || '',
             home_address: profile.home_address || '',
             role_title: profile.role_title || '',
-            custom_rules: profile.custom_rules || '',
             avatar_url: profile.avatar_url || ''
           });
         }
@@ -105,10 +101,8 @@ export default function ProfileSettingsPage() {
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email,
           home_address: formData.home_address,
           role_title: formData.role_title,
-          custom_rules: formData.custom_rules,
           avatar_url: formData.avatar_url
         })
         .eq('id', userId);
@@ -252,31 +246,16 @@ export default function ProfileSettingsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 focus:outline-none cursor-not-allowed"
-                  readOnly
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="role_title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role Title</label>
-                <input
-                  type="text"
-                  id="role_title"
-                  name="role_title"
-                  value={formData.role_title}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
+            <div className="space-y-2">
+              <label htmlFor="role_title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role Title</label>
+              <input
+                type="text"
+                id="role_title"
+                name="role_title"
+                value={formData.role_title}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
             </div>
 
             <div className="space-y-2">
@@ -289,18 +268,6 @@ export default function ProfileSettingsPage() {
                 value={formData.home_address}
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="custom_rules" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Custom Rules & Preferences</label>
-              <textarea
-                id="custom_rules"
-                name="custom_rules"
-                rows={3}
-                value={formData.custom_rules}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
               />
             </div>
 
@@ -318,6 +285,27 @@ export default function ProfileSettingsPage() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      {/* Smart Working Rules Placeholder */}
+      <div className="max-w-4xl mt-8 bg-gradient-to-r from-primary/5 to-secondary/5 dark:from-primary/10 dark:to-secondary/10 rounded-2xl shadow-sm border border-primary/20 dark:border-primary/30 overflow-hidden relative">
+        <div className="absolute top-6 right-6">
+          <span className="bg-primary/20 text-primary font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">Coming Soon</span>
+        </div>
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Smart Working Rules</h2>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-2xl">
+            We are building a dedicated AI Rule Builder! Soon, you will be able to construct complex, natural-language logic rules to govern how the AI dispatcher manages your schedule, buffers, and appointments.
+          </p>
+          <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 border border-white/20 dark:border-slate-700/50 backdrop-blur-sm">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 italic">
+              Example: "Don't book any shoots past 4 PM on Fridays, and automatically add 30 mins travel buffer if the shoot is outside the CBD."
+            </p>
+          </div>
         </div>
       </div>
     </main>

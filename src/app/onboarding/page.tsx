@@ -15,10 +15,8 @@ export default function OnboardingPage() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    email: '',
     home_address: '',
-    role_title: '',
-    custom_rules: ''
+    role_title: ''
   });
 
   useEffect(() => {
@@ -32,10 +30,8 @@ export default function OnboardingPage() {
           setFormData({
             first_name: profile.first_name || '',
             last_name: profile.last_name || '',
-            email: profile.email || user.email || '',
             home_address: profile.home_address || '',
-            role_title: profile.role_title || '',
-            custom_rules: profile.custom_rules || ''
+            role_title: profile.role_title || ''
           });
         }
       }
@@ -61,10 +57,8 @@ export default function OnboardingPage() {
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          email: formData.email,
           home_address: formData.home_address,
           role_title: formData.role_title,
-          custom_rules: formData.custom_rules,
         })
         .eq('id', user.id);
 
@@ -145,20 +139,6 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Email Address *</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none cursor-not-allowed"
-              readOnly
-            />
-          </div>
-
-          <div className="space-y-2">
             <label htmlFor="home_address" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Home Base Address</label>
             <p className="text-xs text-slate-500 mb-1">Used to calculate your driving distances and routes.</p>
             <input
@@ -183,20 +163,6 @@ export default function OnboardingPage() {
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
               placeholder="e.g. Lead Photographer"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="custom_rules" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Custom Rules & Preferences</label>
-            <p className="text-xs text-slate-500 mb-1">Any specific scheduling rules or preferences for your AI dispatcher?</p>
-            <textarea
-              id="custom_rules"
-              name="custom_rules"
-              rows={3}
-              value={formData.custom_rules}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-              placeholder="e.g. No shoots before 9am, prefer lunch break around 1pm."
             />
           </div>
 
