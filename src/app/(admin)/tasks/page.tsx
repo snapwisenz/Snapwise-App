@@ -163,7 +163,7 @@ export default function TasksPage() {
       {isModalOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="fixed left-[50%] top-[50%] z-50 flex flex-col w-[90vw] md:w-[500px] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl rounded-2xl">
+          <div className="fixed left-[50%] top-[50%] z-50 flex flex-col w-full min-w-[320px] sm:min-w-[400px] max-w-md translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl sm:rounded-lg">
             <div className="pb-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center w-full">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add New Task</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
