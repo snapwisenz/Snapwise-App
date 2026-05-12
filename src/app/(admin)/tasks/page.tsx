@@ -5,10 +5,10 @@ import { createClient } from '@/utils/supabase/client';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
+import * as Popover from '@radix-ui/react-popover';
 
 function DateTimePicker({ value, onChange }: { value: string, onChange: (val: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
   
   const [date, setDate] = useState<Date | undefined>(value ? new Date(value) : undefined);
   const [time, setTime] = useState<string>(
@@ -25,69 +25,75 @@ function DateTimePicker({ value, onChange }: { value: string, onChange: (val: st
     }
   }, [date, time]);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div className="relative w-full" ref={popoverRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left font-medium text-slate-700 dark:text-slate-300"
-      >
-        <div className="flex items-center gap-3">
-          <CalendarIcon className="w-5 h-5 text-slate-500" />
-          <span>{value ? format(new Date(value), 'dd/MM/yyyy, HH:mm') : 'Select date & time'}</span>
-        </div>
-      </button>
+    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <div className="flex items-center gap-3">
+            <CalendarIcon className="w-5 h-5 text-slate-500" />
+            <span>{value ? format(new Date(value), 'dd/MM/yyyy, HH:mm') : 'Select date & time'}</span>
+          </div>
+        </button>
+      </Popover.Trigger>
 
-      {isOpen && (
-        <div className="absolute z-[100] mt-2 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl w-auto min-w-[300px]">
-          <DayPicker
-            mode="single"
-            selected={date}
-            onSelect={(d) => { if (d) setDate(d); }}
-            className="p-0"
-            classNames={{
-              months: "flex flex-col space-y-4",
-              month: "space-y-4",
-              month_caption: "flex justify-center pt-1 relative items-center",
-              caption_label: "text-sm font-bold text-slate-900 dark:text-white",
-              nav: "space-x-1 flex items-center",
-              button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1 flex items-center justify-center",
-              button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1 flex items-center justify-center",
-              month_grid: "w-full border-collapse space-y-1",
-              weekdays: "flex",
-              weekday: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
-              week: "flex w-full mt-2",
-              day: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-              day_button: "h-full w-full p-0 font-bold aria-selected:opacity-100 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 flex items-center justify-center",
-              selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white",
-              today: "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50",
-              outside: "text-slate-400 opacity-50",
-              disabled: "text-slate-400 opacity-50",
-              hidden: "invisible",
-            }}
-          />
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
-            <Clock className="w-4 h-4 text-slate-500" />
+      <Popover.Portal>
+        <Popover.Content 
+          side="top" 
+          align="start" 
+          sideOffset={8}
+          className="z-[100] p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl w-auto outline-none flex flex-col sm:flex-row gap-6 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+        >
+          {/* Calendar side */}
+          <div>
+            <DayPicker
+              mode="single"
+              selected={date}
+              onSelect={(d) => { if (d) setDate(d); }}
+              className="p-0"
+              classNames={{
+                months: "flex flex-col space-y-4",
+                month: "space-y-4",
+                month_caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-bold text-slate-900 dark:text-white",
+                nav: "space-x-1 flex items-center",
+                button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1 flex items-center justify-center",
+                button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1 flex items-center justify-center",
+                month_grid: "w-full border-collapse space-y-1",
+                weekdays: "flex",
+                weekday: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
+                week: "flex w-full mt-2",
+                day: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                day_button: "h-full w-full p-0 font-bold aria-selected:opacity-100 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 flex items-center justify-center",
+                selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white",
+                today: "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50",
+                outside: "text-slate-400 opacity-50",
+                disabled: "text-slate-400 opacity-50",
+                hidden: "invisible",
+              }}
+            />
+          </div>
+
+          {/* Time sidebar */}
+          <div className="flex flex-col gap-3 pt-2 sm:pt-1 sm:border-l sm:border-slate-100 dark:sm:border-slate-800 sm:pl-6 sm:min-w-[140px]">
+            <label className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-500" /> Time
+            </label>
             <input 
               type="time" 
               value={time} 
               onChange={(e) => setTime(e.target.value)}
-              className="flex-1 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary/50 focus:outline-none"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-lg font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary/50 focus:outline-none"
             />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              Select the exact time for this task to be due.
+            </p>
           </div>
-        </div>
-      )}
-    </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 
