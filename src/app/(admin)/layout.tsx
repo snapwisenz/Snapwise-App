@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
+import UserNav from '@/components/UserNav';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
@@ -47,16 +48,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
             </button>
             
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-sm font-semibold">{fullName}</p>
-                <p className="text-xs text-slate-500">{roleTitle}</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={avatarUrl} alt="User Profile" className="w-full h-full object-cover" />
-              </div>
-            </div>
+            <UserNav 
+              fullName={fullName} 
+              roleTitle={roleTitle} 
+              avatarUrl={avatarUrl} 
+              email={user.email || ''} 
+            />
           </div>
         </header>
 
