@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Script from 'next/script';
 
+const PRESET_ICONS = [
+  { id: 'camera', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>` },
+  { id: 'sun', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>` },
+  { id: 'user', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>` },
+  { id: 'house', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
+  { id: 'building', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/></svg>` },
+  { id: 'compass', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>` },
+  { id: 'cat', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/></svg>` },
+  { id: 'dog', svg: `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.7.28 1.53 1 2+1.08.7 2.51.5 3 .5"/><path d="M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.7-.28 1.53-1 2-1.08.7-2.51.5-3 .5"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/><path d="M6 12c0-5 2-8 6-8s6 3 6 8a6 6 0 0 1-12 0Z"/></svg>` },
+];
+
 export default function ProfileSettingsPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -182,18 +193,18 @@ export default function ProfileSettingsPage() {
 
               <div>
                 <p className="text-sm font-semibold text-slate-500 mb-2">Or choose a preset:</p>
-                <div className="flex items-center gap-3">
-                  {['fun', 'bottts', 'adventurer', 'micah'].map((style) => {
-                    const presetUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${formData.first_name || 'user'}`;
+                <div className="flex items-center gap-3 flex-wrap">
+                  {PRESET_ICONS.map((preset) => {
+                    const presetUrl = `data:image/svg+xml;utf8,${encodeURIComponent(preset.svg)}`;
                     return (
                       <button 
-                        key={style}
+                        key={preset.id}
                         type="button"
                         onClick={() => selectPresetAvatar(presetUrl)}
-                        className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${formData.avatar_url === presetUrl ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-slate-300'}`}
+                        className={`w-12 h-12 rounded-full overflow-hidden border-2 flex items-center justify-center bg-slate-100 dark:bg-slate-800 transition-all ${formData.avatar_url === presetUrl ? 'border-primary ring-2 ring-primary/30' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'}`}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={presetUrl} alt="Preset Avatar" className="w-full h-full object-cover bg-slate-100" />
+                        <img src={presetUrl} alt={`Preset ${preset.id}`} className="w-6 h-6 object-contain" />
                       </button>
                     );
                   })}
