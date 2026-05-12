@@ -161,15 +161,16 @@ export default function TasksPage() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-lg p-6 overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
-            <div className="pb-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center w-full">
+        <>
+          <div className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg sm:rounded-lg">
+            <div className="pb-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center w-full">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add New Task</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
-            <form onSubmit={handleAddTask} className="pt-6 space-y-5 w-full flex flex-col">
+            <form onSubmit={handleAddTask} className="space-y-5 w-full flex flex-col">
               <div className="w-full">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Task Description</label>
                 <input 
@@ -196,7 +197,7 @@ export default function TasksPage() {
                   ))}
                 </select>
               </div>
-              <div className="pt-4 flex w-full gap-3">
+              <div className="pt-2 flex w-full gap-3">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -214,7 +215,7 @@ export default function TasksPage() {
               </div>
             </form>
           </div>
-        </div>
+        </>
       )}
     </main>
   );
