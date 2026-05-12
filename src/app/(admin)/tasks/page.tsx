@@ -162,15 +162,15 @@ export default function TasksPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-lg p-6 overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+            <div className="pb-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center w-full">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add New Task</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
-            <form onSubmit={handleAddTask} className="p-6 space-y-5">
-              <div>
+            <form onSubmit={handleAddTask} className="pt-6 space-y-5 w-full flex flex-col">
+              <div className="w-full">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Task Description</label>
                 <input 
                   type="text" 
@@ -181,7 +181,7 @@ export default function TasksPage() {
                   required
                 />
               </div>
-              <div>
+              <div className="w-full">
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Link to Job (Optional)</label>
                 <select 
                   value={newTaskJobId}
@@ -196,18 +196,18 @@ export default function TasksPage() {
                   ))}
                 </select>
               </div>
-              <div className="pt-4 flex gap-3">
+              <div className="pt-4 flex w-full gap-3">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors"
+                  className="w-full flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   disabled={!newTaskDescription.trim()}
-                  className="flex-1 px-4 py-3 bg-primary hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-colors"
+                  className="w-full flex-1 px-4 py-3 bg-primary hover:opacity-90 disabled:opacity-50 text-white font-bold rounded-xl transition-colors"
                 >
                   Save Task
                 </button>
