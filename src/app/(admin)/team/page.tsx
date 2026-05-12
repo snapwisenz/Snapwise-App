@@ -79,13 +79,13 @@ export default function TeamManagementPage() {
 
         {/* Dashboard Stats / Asymmetric Section */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="col-span-1 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+          <div className="col-span-1 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
             <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Total Team</p>
             <h3 className="text-4xl font-bold text-slate-900 dark:text-white mt-1">{photographers.length}</h3>
           </div>
           
-          <div className="col-span-1 md:col-span-3 bg-primary/10 dark:bg-primary/5 p-6 rounded-xl border border-primary/20 flex items-center justify-between overflow-hidden relative">
-            <div className="z-10">
+          <div className="col-span-1 md:col-span-3 bg-primary/10 dark:bg-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between overflow-hidden relative">
+            <div className="z-10 flex-1">
               <h3 className="text-xl font-bold text-primary dark:text-primary-300">Performance Insight</h3>
               <p className="text-base text-primary/80 dark:text-primary-200/80 max-w-md mt-1">92% of your photographers are meeting their 24-hour delivery window this week.</p>
             </div>
