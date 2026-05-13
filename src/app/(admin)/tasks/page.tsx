@@ -139,8 +139,8 @@ export default function TasksPage() {
 
     const { data: teamData } = await supabase
       .from('profiles')
-      .select('id, full_name, email')
-      .order('full_name', { ascending: true });
+      .select('id, first_name, last_name, email')
+      .order('first_name', { ascending: true });
       
     if (teamData) setTeamMembers(teamData);
 
@@ -355,11 +355,15 @@ export default function TasksPage() {
                     className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
                     <option value="">Unassigned</option>
-                    {teamMembers.map(member => (
-                      <option key={member.id} value={member.id}>
-                        {member.full_name || member.email}
-                      </option>
-                    ))}
+                    {teamMembers.map(member => {
+                      const fullName = `${member.first_name || ''} ${member.last_name || ''}`.trim();
+                      const displayName = fullName || member.email || 'Unnamed User';
+                      return (
+                        <option key={member.id} value={member.id}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
