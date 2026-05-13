@@ -220,7 +220,7 @@ export default function AgencyProfilePage({ params }: { params: Promise<{ id: st
         {/* Add Location Modal */}
         {showLocationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm shadow-xl border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm sm:min-w-[380px] shadow-xl border border-slate-200 dark:border-slate-800">
               <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Add Location</h2>
               <form onSubmit={handleAddLocation} className="space-y-4">
                 <div>
@@ -228,8 +228,8 @@ export default function AgencyProfilePage({ params }: { params: Promise<{ id: st
                   <input type="text" value={newLocationName} onChange={e => setNewLocationName(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2" required placeholder="e.g. Richmond Branch" />
                 </div>
                 <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setShowLocationModal(false)} className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 text-sm">Cancel</button>
-                  <button type="submit" className="flex-1 px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm">Add</button>
+                  <button type="button" onClick={() => setShowLocationModal(false)} className="flex-1 w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 text-sm">Cancel</button>
+                  <button type="submit" className="flex-1 w-full px-4 py-2 bg-primary text-white rounded-xl font-bold text-sm">Add</button>
                 </div>
               </form>
             </div>

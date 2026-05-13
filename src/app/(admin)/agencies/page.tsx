@@ -293,7 +293,7 @@ export default function AgenciesPage() {
         {/* Add Agency Modal */}
         {showAgencyModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-[480px] shadow-2xl border border-slate-200 dark:border-slate-800 transition-all duration-300">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-[480px] sm:min-w-[400px] shadow-2xl border border-slate-200 dark:border-slate-800 transition-all duration-300">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">New Agency</h2>
@@ -349,7 +349,7 @@ export default function AgenciesPage() {
         {/* Add Package Modal */}
         {showPackageModal && packageContext && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-[720px] shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col transition-all duration-300">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-[720px] sm:min-w-[600px] shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col transition-all duration-300">
               <div className="flex justify-between items-center mb-6 flex-shrink-0">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Add Custom Package</h2>
