@@ -1096,7 +1096,7 @@ export default function NewJobPage() {
       {/* New Agent Modal */}
       {showAgentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 w-full max-w-md sm:min-w-[400px] shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Add New Agent</h2>
               <button type="button" onClick={() => setShowAgentModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
@@ -1131,7 +1131,7 @@ export default function NewJobPage() {
               <button 
                 type="button" 
                 onClick={() => setShowAgentModal(false)}
-                className="flex-1 px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
+                className="flex-1 w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
               >
                 Cancel
               </button>
@@ -1139,7 +1139,7 @@ export default function NewJobPage() {
                 type="button"
                 onClick={handleSaveAgent}
                 disabled={isSavingAgent || !newAgentName.trim()}
-                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all text-sm disabled:opacity-50"
+                className="flex-1 w-full px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all text-sm disabled:opacity-50"
               >
                 {isSavingAgent ? 'Saving...' : 'Save Agent'}
               </button>
