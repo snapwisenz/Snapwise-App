@@ -41,6 +41,12 @@ export default function NewJobPage() {
     virtualStagingNotes: '',
   });
 
+  // New Agent Modal State
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [newAgentName, setNewAgentName] = useState('');
+  const [newAgentContact, setNewAgentContact] = useState('');
+  const [isSavingAgent, setIsSavingAgent] = useState(false);
+
   // Smart Task Fields
   const [packageDetails, setPackageDetails] = useState('');
   const [packageTbc, setPackageTbc] = useState(false);
@@ -210,6 +216,36 @@ export default function NewJobPage() {
       console.error(error);
     } finally {
       setLoadingRouting(false);
+    }
+  };
+
+  const handleSaveAgent = async () => {
+    if (!newAgentName.trim() || !selectedAgency) {
+      alert("Please enter a name and ensure an agency is selected.");
+      return;
+    }
+    setIsSavingAgent(true);
+    try {
+      const { data, error } = await supabase.from('agents').insert([{
+        sub_agency_id: selectedAgency,
+        name: newAgentName.trim(),
+        contact_info: newAgentContact.trim() || null
+      }]).select().single();
+
+      if (error) throw error;
+      
+      if (data) {
+        setAgentsList(prev => [...prev, data]);
+        setSelectedAgent(data.id);
+        setShowAgentModal(false);
+        setNewAgentName('');
+        setNewAgentContact('');
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save agent.");
+    } finally {
+      setIsSavingAgent(false);
     }
   };
 
@@ -426,6 +462,13 @@ export default function NewJobPage() {
                 <div>
                   <div className="flex justify-between items-center mb-2 ml-1">
                     <label className="block text-xs font-semibold text-slate-500">Select Agent</label>
+                    <button 
+                      type="button"
+                      className={`text-primary text-[10px] font-bold uppercase hover:underline ${!selectedAgency ? 'opacity-50 pointer-events-none' : ''}`}
+                      onClick={() => setShowAgentModal(true)}
+                    >
+                      + Add New
+                    </button>
                   </div>
                   <select 
                     value={selectedAgent}
@@ -1045,6 +1088,61 @@ export default function NewJobPage() {
                   Save Custom Package
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Agent Modal */}
+      {showAgentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Add New Agent</h2>
+              <button type="button" onClick={() => setShowAgentModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <span className="material-icons-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Agent Name *</label>
+                <input 
+                  type="text" 
+                  value={newAgentName}
+                  onChange={(e) => setNewAgentName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                  placeholder="e.g. Jane Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Contact Info</label>
+                <input 
+                  type="text" 
+                  value={newAgentContact}
+                  onChange={(e) => setNewAgentContact(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                  placeholder="e.g. jane@example.com"
+                />
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button 
+                type="button" 
+                onClick={() => setShowAgentModal(false)}
+                className="flex-1 px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={handleSaveAgent}
+                disabled={isSavingAgent || !newAgentName.trim()}
+                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all text-sm disabled:opacity-50"
+              >
+                {isSavingAgent ? 'Saving...' : 'Save Agent'}
+              </button>
             </div>
           </div>
         </div>
