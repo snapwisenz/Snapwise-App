@@ -40,6 +40,13 @@ export default function NewJobPage() {
     virtualStagingNotes: '',
   });
 
+  // Smart Task Fields
+  const [packageDetails, setPackageDetails] = useState('');
+  const [packageTbc, setPackageTbc] = useState(false);
+  const [keyBoxPin, setKeyBoxPin] = useState('');
+  const [keyPinTbc, setKeyPinTbc] = useState(false);
+  const [requiresFloorPlan, setRequiresFloorPlan] = useState(false);
+
   const [pricingSettings, setPricingSettings] = useState({
     ground_photo_price: 10,
     drone_photo_price: 15,
@@ -233,7 +240,7 @@ export default function NewJobPage() {
       startDate.setDate(startDate.getDate() + 1);
       startDate.setHours(9, 0, 0, 0);
 
-      const { error } = await supabase.from('bookings').insert([{
+      const { data: insertedBooking, error } = await supabase.from('bookings').insert([{
         user_id: user.id,
         agency_id: subAgency?.agency_id || null,
         sub_agency_id: selectedAgency,
@@ -243,15 +250,55 @@ export default function NewJobPage() {
         start_time: startDate.toISOString(),
         status: 'pending',
         deliverables: deliverables,
-        notes: "Generated from UI"
-      }]);
+        notes: "Generated from UI",
+        package_details: packageDetails,
+        package_tbc: packageTbc,
+        key_box_pin: keyBoxPin,
+        key_pin_tbc: keyPinTbc,
+        requires_floor_plan: requiresFloorPlan
+      }]).select().single();
 
       if (error) {
         console.error("Error saving booking:", error);
         alert("Failed to save booking. Check console for details.");
-      } else {
+      } else if (insertedBooking) {
+        // Evaluate Smart Tasks
+        const tasksToInsert = [];
+        if (packageTbc) {
+          tasksToInsert.push({
+            user_id: user.id,
+            job_id: insertedBooking.id,
+            description: "Confirm package details with agent",
+            notes: packageDetails,
+            task_type: 'core'
+          });
+        }
+        if (keyPinTbc) {
+          tasksToInsert.push({
+            user_id: user.id,
+            job_id: insertedBooking.id,
+            description: "Confirm key box PIN",
+            task_type: 'core'
+          });
+        }
+        if (requiresFloorPlan) {
+          tasksToInsert.push({
+            user_id: user.id,
+            job_id: insertedBooking.id,
+            description: "Receive existing floor plan from agent",
+            task_type: 'core'
+          });
+        }
+        
+        if (tasksToInsert.length > 0) {
+          const { error: taskError } = await supabase.from('tasks').insert(tasksToInsert);
+          if (taskError) {
+            console.error("Error inserting tasks:", taskError);
+          }
+        }
+
         alert("Booking finalized successfully!");
-        window.location.href = '/dashboard'; // Redirect to dashboard
+        window.location.href = `/bookings/${insertedBooking.id}`; // Redirect to specific booking
       }
     } catch (err) {
       console.error(err);
@@ -664,6 +711,59 @@ export default function NewJobPage() {
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Vendor Number</label>
                     <input className="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" placeholder="(555) 000-0000" type="tel" defaultValue="(555) 123-4567" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-slate-500 ml-1">Package Details</label>
+                    <textarea 
+                      value={packageDetails}
+                      onChange={(e) => setPackageDetails(e.target.value)}
+                      className="w-full bg-white border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-primary min-h-[80px]" 
+                      placeholder="e.g. Needs drone shots of the backyard..."
+                    />
+                    <label className="flex items-center gap-2 cursor-pointer mt-1 ml-1 w-fit">
+                      <input 
+                        type="checkbox" 
+                        checked={packageTbc}
+                        onChange={(e) => setPackageTbc(e.target.checked)}
+                        className="w-4 h-4 text-warning rounded border-slate-300 focus:ring-warning" 
+                      />
+                      <span className="text-xs font-semibold text-slate-500">To Be Confirmed</span>
+                    </label>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 ml-1 mb-2">Key Box PIN</label>
+                      <input 
+                        type="text" 
+                        value={keyBoxPin}
+                        onChange={(e) => setKeyBoxPin(e.target.value)}
+                        className="w-full bg-white border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" 
+                        placeholder="e.g. 1234"
+                      />
+                      <label className="flex items-center gap-2 cursor-pointer mt-2 ml-1 w-fit">
+                        <input 
+                          type="checkbox" 
+                          checked={keyPinTbc}
+                          onChange={(e) => setKeyPinTbc(e.target.checked)}
+                          className="w-4 h-4 text-warning rounded border-slate-300 focus:ring-warning" 
+                        />
+                        <span className="text-xs font-semibold text-slate-500">To Be Confirmed</span>
+                      </label>
+                    </div>
+
+                    <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        checked={requiresFloorPlan}
+                        onChange={(e) => setRequiresFloorPlan(e.target.checked)}
+                        className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary" 
+                      />
+                      <span className="text-sm font-semibold text-slate-700">Requires Floor Plan Processing</span>
+                    </label>
                   </div>
                 </div>
                 

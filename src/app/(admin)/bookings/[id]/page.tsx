@@ -1,7 +1,90 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 export default function BookingDetailsPage({ params }: { params: { id: string } }) {
-  // We can use params.id later to fetch real booking details
+  const [booking, setBooking] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTaskText, setNewTaskText] = useState('');
+  const [isAddingTask, setIsAddingTask] = useState(false);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchData() {
+      const [{ data: bData }, { data: tData }] = await Promise.all([
+        supabase.from('bookings').select('*, agent:agents(*), package:packages(*)').eq('id', params.id).single(),
+        supabase.from('tasks').select('*').eq('job_id', params.id).order('created_at', { ascending: true })
+      ]);
+      if (bData) setBooking(bData);
+      if (tData) setTasks(tData);
+      setLoading(false);
+    }
+    fetchData();
+  }, [params.id, supabase]);
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskText.trim()) return;
+    setIsAddingTask(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const newTask = {
+      user_id: user.id,
+      job_id: params.id,
+      description: newTaskText,
+      task_type: 'manual'
+    };
+
+    const { data, error } = await supabase.from('tasks').insert([newTask]).select();
+    
+    if (!error && data) {
+      setTasks(prev => [...prev, data[0]]);
+      setNewTaskText('');
+    } else {
+      console.error(error);
+    }
+    setIsAddingTask(false);
+  };
+
+  const handleToggleTask = async (taskId: string, currentStatus: boolean) => {
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, is_completed: !currentStatus } : t));
+    await supabase.from('tasks').update({ is_completed: !currentStatus }).eq('id', taskId);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center flex-col">
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Booking not found</h2>
+        <Link href="/bookings" className="text-primary hover:underline mt-2">Return to bookings</Link>
+      </div>
+    );
+  }
+
+  const coreTasks = tasks.filter(t => t.task_type === 'core');
+  const generalTasks = tasks.filter(t => t.task_type !== 'core');
+
+  // Format date safely
+  let dateDisplay = "TBD";
+  if (booking.start_time) {
+    const d = new Date(booking.start_time);
+    dateDisplay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + 
+      " | " + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
   return (
     <>
       {/* Sub-Header / Page Header */}
@@ -16,7 +99,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
               <span>/</span>
               <span className="font-medium text-slate-800 dark:text-slate-200">Booking Details</span>
             </nav>
-            <h1 className="text-2xl font-bold tracking-tight">1234 Maple Drive, Beverly Hills, CA 90210</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{booking.shoot_location || 'No Location Provided'}</h1>
           </div>
           <div className="flex items-center gap-3">
             <button className="px-6 py-2.5 rounded-full border-2 border-primary text-primary font-semibold hover:bg-primary/5 transition-all">
@@ -44,16 +127,20 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Booking Status</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-bold border border-green-200 dark:border-green-800 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                      Confirmed
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 ${
+                      booking.status === 'pending' ? 'bg-warning/20 text-warning-700 border-warning/30' : 
+                      booking.status === 'completed' ? 'bg-success/20 text-success-700 border-success/30' : 
+                      'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${booking.status === 'pending' ? 'bg-warning' : booking.status === 'completed' ? 'bg-success' : 'bg-slate-400'}`}></span>
+                      {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}
                     </span>
                   </div>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Order ID</p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">#BK-94210-23</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">#{booking.id.substring(0, 8).toUpperCase()}</p>
               </div>
             </div>
 
@@ -73,7 +160,7 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                       Date &amp; Time
                     </div>
                     <div className="md:col-span-2 flex justify-between items-center">
-                      <p className="font-semibold text-slate-800 dark:text-slate-200">Oct 24, 2023 | 10:00 AM — 12:30 PM</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{dateDisplay}</p>
                       <button className="p-2 rounded-lg text-success/40 hover:text-success hover:bg-success/10 transition-all opacity-0 group-hover:opacity-100">
                         <span className="material-icons-outlined text-sm">edit</span>
                       </button>
@@ -90,30 +177,8 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                     </div>
                     <div className="md:col-span-2 flex justify-between items-center">
                       <div>
-                        <p className="font-semibold text-slate-800 dark:text-slate-200">Sarah Jenkins</p>
-                        <p className="text-xs text-slate-400">Century 21 Real Estate</p>
-                      </div>
-                      <button className="p-2 rounded-lg text-success/40 hover:text-success hover:bg-success/10 transition-all opacity-0 group-hover:opacity-100">
-                        <span className="material-icons-outlined text-sm">edit</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Photographer */}
-                <div className="p-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors flex justify-between items-center group">
-                  <div className="grid grid-cols-1 md:grid-cols-3 w-full gap-4">
-                    <div className="text-slate-500 text-sm font-medium flex items-center gap-2">
-                      <span className="material-icons-outlined text-success/60 text-lg">photo_camera</span>
-                      Photographer
-                    </div>
-                    <div className="md:col-span-2 flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMObI5aeXI2Yohy629oPwM24iUvr4MTPVB744h9Ozc_X0Bssqcudup8GDfuGPH-2IrhI-iPrzQ4fdOV_KfyDxfbQtkzSWXDjBc2M06zBqq_v624GdWmEcyFijDa8TYO9KE2e6wxj_5S3Y08alBdZVRBekMw_2xXeJRBZzCqq6emxXxzd65tRW4_neRqGXaM_GA3r-eH-jWQVAz2MgrMgg_7fNwlW-ilnm317LgDNz6gbzzqyaDd6d5d5TwG6Xl0A3h3YHloup8vls" alt="Photographer profile headshot" className="w-full h-full object-cover" />
-                        </div>
-                        <p className="font-semibold text-slate-800 dark:text-slate-200">Alex Rivera</p>
+                        <p className="font-semibold text-slate-800 dark:text-slate-200">{booking.agent?.name || 'Unassigned'}</p>
+                        <p className="text-xs text-slate-400">{booking.agent?.email || 'No email provided'}</p>
                       </div>
                       <button className="p-2 rounded-lg text-success/40 hover:text-success hover:bg-success/10 transition-all opacity-0 group-hover:opacity-100">
                         <span className="material-icons-outlined text-sm">edit</span>
@@ -126,13 +191,17 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                 <div className="p-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors flex justify-between items-center group">
                   <div className="grid grid-cols-1 md:grid-cols-3 w-full gap-4">
                     <div className="text-slate-500 text-sm font-medium flex items-center gap-2">
-                      <span className="material-icons-outlined text-success/60 text-lg">payments</span>
-                      Package Price
+                      <span className="material-icons-outlined text-success/60 text-lg">inventory_2</span>
+                      Package
                     </div>
                     <div className="md:col-span-2 flex justify-between items-center">
                       <div className="flex flex-col">
-                        <p className="font-bold text-xl text-slate-800 dark:text-slate-200">$299.00</p>
-                        <p className="text-xs text-slate-400">Premium Photo + 3D Tour</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-200">{booking.package?.name || 'Custom Package'}</p>
+                        <div className="text-xs text-slate-500 mt-1 space-y-1">
+                          {booking.deliverables?.map((del: any, idx: number) => (
+                            <p key={idx}>- {del.name} {del.qty ? `(${del.qty})` : ''}</p>
+                          ))}
+                        </div>
                       </div>
                       <button className="p-2 rounded-lg text-success/40 hover:text-success hover:bg-success/10 transition-all opacity-0 group-hover:opacity-100">
                         <span className="material-icons-outlined text-sm">edit</span>
@@ -144,143 +213,119 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
               </div>
             </div>
 
-            {/* Driving Times & Interactive Map */}
-            <div className="space-y-4">
-              {/* Driving Times Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-success/5 shadow-sm flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                    <span className="material-icons-outlined">directions_car</span>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">From Previous Shoot</p>
-                    <p className="text-lg font-bold text-slate-800 dark:text-slate-200">15 mins</p>
-                  </div>
-                </div>
-                <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-success/5 shadow-sm flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                    <span className="material-icons-outlined">near_me</span>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">To Next Shoot</p>
-                    <p className="text-lg font-bold text-slate-800 dark:text-slate-200">22 mins</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Interactive Map View */}
-              <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm overflow-hidden h-80 relative">
-                {/* Google Map Embed */}
-                <iframe
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent('1234 Maple Drive, Beverly Hills, CA 90210')}`}
-                  className="absolute inset-0"
-                ></iframe>
-                
-                <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg text-[10px] font-bold uppercase tracking-widest text-success border border-success/20 pointer-events-none">
-                  Interactive Map
-                </div>
-                
-                <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-success/10 shadow-xl flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center text-success">
-                      <span className="material-icons-outlined text-sm">location_on</span>
-                    </div>
+            {/* Smart Task Fields summary (optional info area) */}
+            {(booking.package_details || booking.key_box_pin) && (
+              <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm p-6">
+                <h3 className="font-bold text-lg mb-4">Submission Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {booking.package_details && (
                     <div>
-                      <p className="text-[9px] uppercase font-bold text-slate-400 leading-none mb-1">Current Location</p>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Beverly Hills, CA 90210</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase">Package Notes</p>
+                      <p className="text-sm mt-1">{booking.package_details}</p>
                     </div>
-                  </div>
+                  )}
+                  {booking.key_box_pin && (
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase">Key Box PIN</p>
+                      <p className="text-sm mt-1">{booking.key_box_pin}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
+            
           </div>
 
-          {/* Right Column: Quick Notes & Sidebar */}
+          {/* Right Column: Tasks Sidebar */}
           <div className="lg:col-span-4 space-y-6">
 
-            {/* Requirements & Assets */}
-            <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            {/* Core Tasks */}
+            <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-warning/20 shadow-sm overflow-hidden flex flex-col">
+              <div className="px-6 py-5 border-b border-warning/10 bg-warning/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="material-icons-outlined text-success">fact_check</span>
-                  <h3 className="font-bold">Requirements</h3>
+                  <span className="material-icons-outlined text-warning">fact_check</span>
+                  <h3 className="font-bold text-slate-800 dark:text-slate-200">Core Requirements</h3>
                 </div>
+                <span className="text-[10px] font-bold text-warning-600 bg-warning/20 px-2 py-1 rounded-full">{coreTasks.length} ITEMS</span>
               </div>
-              <div className="p-6 space-y-4">
-                {/* Agent Meeting */}
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative flex items-center mt-0.5">
-                    <input type="checkbox" className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-success checked:border-success transition-all" />
-                    <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-success transition-colors">Agent meeting at property</p>
-                    <p className="text-xs text-slate-500">Will the agent be present during the shoot?</p>
-                  </div>
-                </label>
-
-                {/* Floorplan */}
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative flex items-center mt-0.5">
-                    <input type="checkbox" className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-success checked:border-success transition-all" />
-                    <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-success transition-colors">Floorplan required</p>
-                    <p className="text-xs text-slate-500">Provide floorplan to agent if package includes it</p>
-                  </div>
-                </label>
-
-                {/* Highlights */}
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative flex items-center mt-0.5">
-                    <input type="checkbox" className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-success checked:border-success transition-all" />
-                    <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-success transition-colors">Capture particular highlights</p>
-                    <p className="text-xs text-slate-500">Any specific features the agent wants captured?</p>
-                  </div>
-                </label>
+              <div className="p-6 flex-grow space-y-4">
+                {coreTasks.length === 0 ? (
+                  <p className="text-sm text-slate-500 italic">No core requirements flagged.</p>
+                ) : (
+                  coreTasks.map(task => (
+                    <label key={task.id} className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center mt-0.5">
+                        <input 
+                          type="checkbox" 
+                          checked={task.is_completed}
+                          onChange={() => handleToggleTask(task.id, task.is_completed)}
+                          className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-warning checked:border-warning transition-all" 
+                        />
+                        <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
+                      </div>
+                      <div>
+                        <p className={`text-sm font-semibold transition-colors ${task.is_completed ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200 group-hover:text-warning'}`}>{task.description}</p>
+                        {task.notes && (
+                          <p className={`text-xs mt-1 ${task.is_completed ? 'text-slate-400' : 'text-slate-500'}`}>{task.notes}</p>
+                        )}
+                      </div>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
             
-            {/* Quick Notes Staging Panel */}
-            <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-success/5 shadow-sm h-full flex flex-col">
-              <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            {/* General Tasks Panel */}
+            <div className="bg-white dark:bg-slate-900/50 rounded-xl border border-primary/10 shadow-sm flex flex-col">
+              <div className="px-6 py-5 border-b border-primary/10 bg-primary/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="material-icons-outlined text-success">description</span>
-                  <h3 className="font-bold">Quick Notes</h3>
+                  <span className="material-icons-outlined text-primary">task_alt</span>
+                  <h3 className="font-bold text-slate-800 dark:text-slate-200">General Tasks</h3>
                 </div>
-                <span className="flex h-2 w-2 rounded-full bg-success animate-pulse"></span>
+                <span className="text-[10px] font-bold text-primary-600 bg-primary/20 px-2 py-1 rounded-full">{generalTasks.length} ITEMS</span>
               </div>
-              <div className="p-6 flex-grow">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Staging Instructions</label>
-                <textarea 
-                  className="w-full h-48 bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl focus:ring-2 focus:ring-success/20 text-sm p-4 resize-none placeholder:text-slate-400" 
-                  placeholder="Add staging notes here... (e.g. Hidden key location, pets on property, preferred angles)"
-                  defaultValue={`1. Ensure all pool lights are turned on before twilight shoot.\n2. Hidden key under the terracotta pot to the left of the main entrance.\n3. Master bedroom curtains should remain open for canyon views.\n4. Homeowner will be present but staying in the guest suite.`}
-                />
-                
-                <div className="mt-6 space-y-4">
-                  <div className="flex items-start gap-3 p-3 bg-success/5 border border-success/10 rounded-lg">
-                    <span className="material-icons-outlined text-success text-sm mt-0.5">info</span>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Notes are synced with the photographer's mobile app in real-time.
-                    </p>
-                  </div>
-                </div>
+              
+              <div className="p-6 flex-grow space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar">
+                {generalTasks.length === 0 ? (
+                  <p className="text-sm text-slate-500 italic">No general tasks. Add one below!</p>
+                ) : (
+                  generalTasks.map(task => (
+                    <label key={task.id} className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center mt-0.5">
+                        <input 
+                          type="checkbox" 
+                          checked={task.is_completed}
+                          onChange={() => handleToggleTask(task.id, task.is_completed)}
+                          className="peer w-5 h-5 appearance-none rounded border-2 border-slate-300 dark:border-slate-600 checked:bg-primary checked:border-primary transition-all" 
+                        />
+                        <span className="material-icons-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-sm opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity">check</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold transition-colors ${task.is_completed ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200 group-hover:text-primary'}`}>{task.description}</p>
+                      </div>
+                    </label>
+                  ))
+                )}
               </div>
-              <div className="p-6 border-t border-slate-100 dark:border-slate-800">
-                <button className="w-full py-3 bg-success text-white font-bold rounded-full hover:bg-success/90 transition-colors shadow-lg">
-                  Save Notes
-                </button>
+
+              {/* Add Task Input */}
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 rounded-b-xl">
+                <form onSubmit={handleAddTask} className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newTaskText}
+                    onChange={(e) => setNewTaskText(e.target.value)}
+                    placeholder="Add a new task..."
+                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isAddingTask || !newTaskText.trim()}
+                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </form>
               </div>
             </div>
 
@@ -290,21 +335,11 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
               <div className="space-y-4">
                 <div className="flex gap-3">
                   <div className="relative">
-                    <div className="w-2 h-2 rounded-full bg-success mt-1.5"></div>
-                    <div className="absolute top-4 bottom-[-16px] left-[3.5px] w-[1px] bg-success/20"></div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold">Booking Confirmed</p>
-                    <p className="text-[10px] text-slate-500">Oct 12, 2023 · 2:45 PM</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="relative">
                     <div className="w-2 h-2 rounded-full bg-slate-300 mt-1.5"></div>
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-500">Booking Created</p>
-                    <p className="text-[10px] text-slate-500">Oct 12, 2023 · 2:30 PM</p>
+                    <p className="text-[10px] text-slate-500">Just now</p>
                   </div>
                 </div>
               </div>
@@ -313,13 +348,6 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
           </div>
         </div>
       </main>
-      
-      {/* Floating Helper (Bottom Right) */}
-      <div className="fixed bottom-8 right-8">
-        <button className="w-14 h-14 bg-white dark:bg-slate-800 rounded-full shadow-2xl flex items-center justify-center text-success border border-success/20 hover:scale-110 transition-transform">
-          <span className="material-icons-outlined">support_agent</span>
-        </button>
-      </div>
     </>
   );
 }
