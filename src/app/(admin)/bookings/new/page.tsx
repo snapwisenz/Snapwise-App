@@ -161,6 +161,10 @@ export default function NewJobPage() {
   const initAutocomplete = () => {
     if (!inputRef.current || !window.google) return;
     
+    // Prevent multiple initializations on the same input
+    if (inputRef.current.dataset.hasAutocomplete) return;
+    inputRef.current.dataset.hasAutocomplete = 'true';
+    
     const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
       fields: ['formatted_address', 'geometry'],
     });
@@ -174,6 +178,12 @@ export default function NewJobPage() {
       }
     });
   };
+
+  useEffect(() => {
+    if (window.google) {
+      initAutocomplete();
+    }
+  }, []);
 
   const calculateTravel = async () => {
     if (!address) return;

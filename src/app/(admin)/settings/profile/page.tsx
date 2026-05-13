@@ -133,6 +133,10 @@ export default function ProfileSettingsPage() {
   const initAutocomplete = () => {
     if (!addressInputRef.current || !window.google) return;
     
+    // Prevent multiple initializations on the same input
+    if (addressInputRef.current.dataset.hasAutocomplete) return;
+    addressInputRef.current.dataset.hasAutocomplete = 'true';
+    
     const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
       fields: ['formatted_address', 'name'],
     });
@@ -143,6 +147,12 @@ export default function ProfileSettingsPage() {
       setFormData(prev => ({ ...prev, home_address: newAddress }));
     });
   };
+
+  useEffect(() => {
+    if (window.google) {
+      initAutocomplete();
+    }
+  }, []);
 
   return (
     <>
