@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/client';
 export default function NewJobPage() {
   const [address, setAddress] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastCalculatedAddress = useRef<string | null>(null);
   const [travelTime, setTravelTime] = useState<{ raw: number; rounded: number } | null>(null);
   const [loadingRouting, setLoadingRouting] = useState(false);
   const [overlapWarning, setOverlapWarning] = useState(false);
@@ -171,10 +172,10 @@ export default function NewJobPage() {
 
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
-      if (place.formatted_address) {
-        setAddress(place.formatted_address);
-      } else if (place.name) {
-        setAddress(place.name);
+      const newAddress = place.formatted_address || place.name || '';
+      if (newAddress) {
+        setAddress(newAddress);
+        calculateTravel(newAddress);
       }
     });
   };
@@ -185,13 +186,13 @@ export default function NewJobPage() {
     }
   }, []);
 
-  const calculateTravel = async () => {
-    if (!address) return;
+  const calculateTravel = async (targetAddress: string) => {
+    if (!targetAddress || targetAddress === lastCalculatedAddress.current) return;
     
     setLoadingRouting(true);
     setOverlapWarning(false);
     try {
-      const res = await fetch(`/api/routing?origin=${encodeURIComponent(PREVIOUS_JOB)}&destination=${encodeURIComponent(address)}`);
+      const res = await fetch(`/api/routing?origin=${encodeURIComponent(PREVIOUS_JOB)}&destination=${encodeURIComponent(targetAddress)}`);
       const data = await res.json();
       
       if (data.success) {
@@ -203,6 +204,7 @@ export default function NewJobPage() {
         if (data.rounded_minutes > 30) {
           setOverlapWarning(true);
         }
+        lastCalculatedAddress.current = targetAddress;
       }
     } catch (error) {
       console.error(error);
@@ -345,20 +347,22 @@ export default function NewJobPage() {
               type="text" 
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              onBlur={() => {
+                if (address) calculateTravel(address);
+              }}
               placeholder="Enter property address..." 
-              className="w-full bg-white dark:bg-slate-800 border-2 border-primary/10 rounded-2xl py-5 pl-14 pr-32 text-lg font-medium focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none shadow-sm transition-all placeholder:text-slate-400"
+              className="w-full bg-white dark:bg-slate-800 border-2 border-primary/10 rounded-2xl py-5 pl-14 pr-16 text-lg font-medium focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none shadow-sm transition-all placeholder:text-slate-400"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <button 
-                  onClick={calculateTravel}
-                  disabled={!address || loadingRouting}
-                  className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
-                >
-                  {loadingRouting ? 'Routing...' : 'Route'}
-                </button>
-                <button className="text-slate-400 hover:text-primary transition-colors p-2">
+              {loadingRouting ? (
+                <div className="p-2 text-primary/50 flex items-center justify-center">
+                  <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
+                </div>
+              ) : (
+                <button className="text-slate-400 hover:text-primary transition-colors p-2" title="Use Current Location">
                   <span className="material-icons-outlined">my_location</span>
                 </button>
+              )}
             </div>
           </div>
 
