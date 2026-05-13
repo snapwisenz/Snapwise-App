@@ -44,52 +44,99 @@ function DateTimePicker({ value, onChange }: { value: string, onChange: (val: st
           side="top" 
           align="start" 
           sideOffset={8}
-          className="z-[100] p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl w-auto outline-none flex flex-col sm:flex-row gap-6 animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+          className="z-[100] p-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl w-auto outline-none flex flex-col animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 overflow-hidden"
         >
-          {/* Calendar side */}
-          <div>
-            <DayPicker
-              mode="single"
-              selected={date}
-              onSelect={(d) => { if (d) setDate(d); }}
-              className="p-0"
-              classNames={{
-                months: "flex flex-col space-y-4",
-                month: "space-y-4",
-                month_caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-bold text-slate-900 dark:text-white",
-                nav: "space-x-1 flex items-center",
-                button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1 flex items-center justify-center",
-                button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1 flex items-center justify-center",
-                month_grid: "w-full border-collapse space-y-1",
-                weekdays: "flex",
-                weekday: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
-                week: "flex w-full mt-2",
-                day: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-                day_button: "h-full w-full p-0 font-bold aria-selected:opacity-100 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 flex items-center justify-center",
-                selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white",
-                today: "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50",
-                outside: "text-slate-400 opacity-50",
-                disabled: "text-slate-400 opacity-50",
-                hidden: "invisible",
-              }}
-            />
+          <div className="flex flex-col sm:flex-row gap-6 p-4">
+            {/* Calendar side */}
+            <div>
+              <DayPicker
+                mode="single"
+                selected={date}
+                onSelect={(d) => { if (d) setDate(d); }}
+                className="p-0"
+                classNames={{
+                  months: "flex flex-col space-y-4",
+                  month: "space-y-4",
+                  month_caption: "flex justify-center pt-1 relative items-center",
+                  caption_label: "text-sm font-bold text-slate-900 dark:text-white",
+                  nav: "space-x-1 flex items-center",
+                  button_previous: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1 flex items-center justify-center",
+                  button_next: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute right-1 flex items-center justify-center",
+                  month_grid: "w-full border-collapse space-y-1",
+                  weekdays: "flex",
+                  weekday: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
+                  week: "flex w-full mt-2",
+                  day: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                  day_button: "h-full w-full p-0 font-bold aria-selected:opacity-100 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 flex items-center justify-center",
+                  selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white",
+                  today: "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50",
+                  outside: "text-slate-400 opacity-50",
+                  disabled: "text-slate-400 opacity-50",
+                  hidden: "invisible",
+                }}
+              />
+            </div>
+
+            {/* Time sidebar */}
+            <div className="flex flex-col gap-3 pt-2 sm:pt-1 sm:border-l sm:border-slate-100 dark:sm:border-slate-800 sm:pl-6 sm:min-w-[160px]">
+              <label className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-500" /> Time
+              </label>
+              
+              <div className="flex gap-2 h-[260px] w-full">
+                {/* Hours column */}
+                <div className="flex flex-col gap-1 overflow-y-auto w-full pr-1">
+                  {Array.from({length: 24}).map((_, i) => {
+                    const h = i.toString().padStart(2, '0');
+                    return (
+                      <button
+                        key={`h-${h}`}
+                        type="button"
+                        onClick={() => setTime(`${h}:${time.split(':')[1]}`)}
+                        className={`py-2 px-3 rounded-md text-sm font-bold transition-colors text-center ${
+                          time.startsWith(`${h}:`) 
+                            ? 'bg-primary text-white' 
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {h}
+                      </button>
+                    )
+                  })}
+                </div>
+                {/* Minutes column */}
+                <div className="flex flex-col gap-1 overflow-y-auto w-full pr-1">
+                  {Array.from({length: 12}).map((_, i) => {
+                    const m = (i * 5).toString().padStart(2, '0');
+                    return (
+                      <button
+                        key={`m-${m}`}
+                        type="button"
+                        onClick={() => setTime(`${time.split(':')[0]}:${m}`)}
+                        className={`py-2 px-3 rounded-md text-sm font-bold transition-colors text-center ${
+                          time.endsWith(`:${m}`) 
+                            ? 'bg-primary text-white' 
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Time sidebar */}
-          <div className="flex flex-col gap-3 pt-2 sm:pt-1 sm:border-l sm:border-slate-100 dark:sm:border-slate-800 sm:pl-6 sm:min-w-[140px]">
-            <label className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-500" /> Time
-            </label>
-            <input 
-              type="time" 
-              value={time} 
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-lg font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary/50 focus:outline-none"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Select the exact time for this task to be due.
-            </p>
+          {/* Footer Action */}
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="px-6 py-2 bg-primary hover:opacity-90 text-white font-bold rounded-lg transition-opacity text-sm shadow-sm"
+            >
+              Confirm
+            </button>
           </div>
         </Popover.Content>
       </Popover.Portal>
