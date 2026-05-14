@@ -1170,7 +1170,6 @@ export default function NewJobPage() {
             </div>
           </div>
         </div>
-        </div>
       </aside>
       )}
       {/* Custom Package Modal */}
