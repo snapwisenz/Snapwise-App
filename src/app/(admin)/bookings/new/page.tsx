@@ -22,9 +22,11 @@ export default function NewJobPage() {
   const [overlapWarning, setOverlapWarning] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Cascading State Management
-  const [selectedAgency, setSelectedAgency] = useState(''); // Stores sub_agency_id
+  // Agent Selection State
   const [selectedAgent, setSelectedAgent] = useState('');
+  const [agentSearch, setAgentSearch] = useState('');
+  const [showAgentDropdown, setShowAgentDropdown] = useState(false);
+  const agentComboRef = useRef<HTMLDivElement>(null);
   
   // Real Data State
   const [agenciesList, setAgenciesList] = useState<any[]>([]);
@@ -54,7 +56,11 @@ export default function NewJobPage() {
   const [showAgentModal, setShowAgentModal] = useState(false);
   const [newAgentName, setNewAgentName] = useState('');
   const [newAgentContact, setNewAgentContact] = useState('');
+  const [newAgentAgencySearch, setNewAgentAgencySearch] = useState('');
+  const [newAgentSelectedSubAgency, setNewAgentSelectedSubAgency] = useState('');
+  const [showNewAgentAgencyDropdown, setShowNewAgentAgencyDropdown] = useState(false);
   const [isSavingAgent, setIsSavingAgent] = useState(false);
+  const newAgentAgencyRef = useRef<HTMLDivElement>(null);
 
   // Top UI State
   const [bookingStatus, setBookingStatus] = useState<'confirmed' | 'pending'>('confirmed');
@@ -123,41 +129,44 @@ export default function NewJobPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
-      const [pricingRes, agenciesRes, subAgenciesRes] = await Promise.all([
+      const [pricingRes, agenciesRes, subAgenciesRes, agentsRes] = await Promise.all([
         supabase.from('agency_settings').select('*').eq('user_id', user.id).single(),
         supabase.from('agencies').select('*').eq('user_id', user.id),
-        supabase.from('sub_agencies').select('*')
+        supabase.from('sub_agencies').select('*'),
+        supabase.from('agents').select('*, sub_agencies(*, agencies(*))')
       ]);
 
       if (pricingRes.data) setPricingSettings(prev => ({ ...prev, ...pricingRes.data }));
       if (agenciesRes.data) setAgenciesList(agenciesRes.data);
       if (subAgenciesRes.data) setSubAgenciesList(subAgenciesRes.data);
+      if (agentsRes.data) setAgentsList(agentsRes.data);
     }
     fetchPricingAndAgencies();
   }, [supabase]);
 
-  // Fetch agents when sub-agency changes
+  // Close agent combobox on outside click
   useEffect(() => {
-    async function fetchAgents() {
-      if (!selectedAgency) {
-        setAgentsList([]);
-        return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (agentComboRef.current && !agentComboRef.current.contains(e.target as Node)) {
+        setShowAgentDropdown(false);
       }
-      const { data } = await supabase.from('agents').select('*').eq('sub_agency_id', selectedAgency);
-      if (data) setAgentsList(data);
-    }
-    fetchAgents();
-  }, [selectedAgency, supabase]);
+      if (newAgentAgencyRef.current && !newAgentAgencyRef.current.contains(e.target as Node)) {
+        setShowNewAgentAgencyDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch packages when agent changes
   useEffect(() => {
     async function fetchPackages() {
-      if (!selectedAgent || !selectedAgency) {
+      if (!selectedAgent) {
         setPackages([]);
         return;
       }
-      const subAgency = subAgenciesList.find(s => s.id === selectedAgency);
-      const parentAgencyId = subAgency?.agency_id;
+      const agent = agentsList.find(a => a.id === selectedAgent);
+      const parentAgencyId = agent?.sub_agencies?.agencies?.id || agent?.sub_agencies?.agency_id;
       
       let queryStr = `agent_id.eq.${selectedAgent}`;
       if (parentAgencyId) {
@@ -168,7 +177,7 @@ export default function NewJobPage() {
       if (data) setPackages(data);
     }
     fetchPackages();
-  }, [selectedAgent, selectedAgency, subAgenciesList, supabase]);
+  }, [selectedAgent, agentsList, supabase]);
 
   const customPrice = useMemo(() => {
     const calculateProductPrice = (qtyStr: string | number, productKey: string, unitPrice: number) => {
@@ -238,11 +247,12 @@ export default function NewJobPage() {
     }
   }, [isLoaded]);
 
-  const fetchSuggestions = async (targetAddress: string, agencyId: string) => {
-    if (!targetAddress || !agencyId) return;
+  const fetchSuggestions = async (targetAddress: string) => {
+    if (!targetAddress || !selectedAgent) return;
     setLoadingSuggestions(true);
     try {
-      const parentAgencyId = subAgenciesList.find(s => s.id === agencyId)?.agency_id;
+      const agent = agentsList.find(a => a.id === selectedAgent);
+      const parentAgencyId = agent?.sub_agencies?.agencies?.id || agent?.sub_agencies?.agency_id;
       if (!parentAgencyId) return;
       const res = await fetch(`/api/routing/suggestions?address=${encodeURIComponent(targetAddress)}&agency_id=${encodeURIComponent(parentAgencyId)}`);
       const data = await res.json();
@@ -260,10 +270,10 @@ export default function NewJobPage() {
   };
 
   useEffect(() => {
-    if (address && selectedAgency && lastCalculatedAddress.current === address) {
-      fetchSuggestions(address, selectedAgency);
+    if (address && selectedAgent && lastCalculatedAddress.current === address) {
+      fetchSuggestions(address);
     }
-  }, [selectedAgency, address, subAgenciesList]);
+  }, [selectedAgent, address, agentsList]);
 
   const dummyEventsData = useMemo(() => {
     const events = [];
@@ -333,8 +343,8 @@ export default function NewJobPage() {
         lastCalculatedAddress.current = targetAddress;
       }
       
-      if (selectedAgency) {
-        fetchSuggestions(targetAddress, selectedAgency);
+      if (selectedAgent) {
+        fetchSuggestions(targetAddress);
       }
     } catch (error) {
       console.error(error);
@@ -344,26 +354,54 @@ export default function NewJobPage() {
   };
 
   const handleSaveAgent = async () => {
-    if (!newAgentName.trim() || !selectedAgency) {
-      alert("Please enter a name and ensure an agency is selected.");
+    if (!newAgentName.trim() || !newAgentSelectedSubAgency) {
+      alert("Please enter a name and select an agency.");
       return;
     }
     setIsSavingAgent(true);
     try {
+      let subAgencyId = newAgentSelectedSubAgency;
+
+      // If the user typed a new agency name (no existing match selected)
+      if (!subAgenciesList.find(s => s.id === subAgencyId)) {
+        // Create new agency + sub-agency on the fly
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+        
+        const { data: newAgency, error: agencyErr } = await supabase.from('agencies').insert([{
+          user_id: user.id,
+          name: newAgentAgencySearch.trim()
+        }]).select().single();
+        if (agencyErr) throw agencyErr;
+        
+        const { data: newSubAgency, error: subErr } = await supabase.from('sub_agencies').insert([{
+          agency_id: newAgency.id,
+          name: newAgentAgencySearch.trim()
+        }]).select().single();
+        if (subErr) throw subErr;
+        
+        setAgenciesList(prev => [...prev, newAgency]);
+        setSubAgenciesList(prev => [...prev, newSubAgency]);
+        subAgencyId = newSubAgency.id;
+      }
+
       const { data, error } = await supabase.from('agents').insert([{
-        sub_agency_id: selectedAgency,
+        sub_agency_id: subAgencyId,
         name: newAgentName.trim(),
         contact_info: newAgentContact.trim() || null
-      }]).select().single();
+      }]).select('*, sub_agencies(*, agencies(*))').single();
 
       if (error) throw error;
       
       if (data) {
         setAgentsList(prev => [...prev, data]);
         setSelectedAgent(data.id);
+        setAgentSearch(data.name);
         setShowAgentModal(false);
         setNewAgentName('');
         setNewAgentContact('');
+        setNewAgentAgencySearch('');
+        setNewAgentSelectedSubAgency('');
       }
     } catch (err) {
       console.error(err);
@@ -384,7 +422,9 @@ export default function NewJobPage() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) throw new Error("No active session");
       
-      const subAgency = subAgenciesList.find(s => s.id === selectedAgency);
+      const agent = agentsList.find(a => a.id === selectedAgent);
+      const agencyId = agent?.sub_agencies?.agencies?.id || agent?.sub_agencies?.agency_id || null;
+      const subAgencyId = agent?.sub_agency_id || null;
       
       // Determine deliverables
       let deliverables = [];
@@ -425,8 +465,8 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
 
       const { data: insertedBooking, error } = await supabase.from('bookings').insert([{
         user_id: user.id,
-        agency_id: subAgency?.agency_id || null,
-        sub_agency_id: selectedAgency,
+        agency_id: agencyId,
+        sub_agency_id: subAgencyId,
         agent_id: selectedAgent,
         package_id: packageId,
         photographer_id: selectedPhotographer,
@@ -554,59 +594,109 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
 
           <div className="space-y-12">
             
-            {/* 1. Agency Section */}
+            {/* 1. Agent Section */}
             <section className="space-y-6">
               <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-                <span className="material-icons-outlined text-base">business</span> 1. Agency &amp; Agent
+                <span className="material-icons-outlined text-base">person</span> 1. Agent
               </h2>
-              <div className="grid grid-cols-2 gap-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
-                <div>
-                  <div className="flex justify-between items-center mb-2 ml-1">
-                    <label className="block text-xs font-semibold text-slate-500">Select Agency</label>
-                    <button className="text-primary text-[10px] font-bold uppercase hover:underline">+ Add New</button>
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
+                <div ref={agentComboRef} className="relative">
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Search Agent</label>
+                  <div className="relative">
+                    <span className="material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                    <input 
+                      type="text"
+                      value={agentSearch}
+                      onChange={(e) => {
+                        setAgentSearch(e.target.value);
+                        setShowAgentDropdown(true);
+                        if (!e.target.value) {
+                          setSelectedAgent('');
+                          setSelectedPackage(null);
+                        }
+                      }}
+                      onFocus={() => setShowAgentDropdown(true)}
+                      placeholder="Search Agent..."
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-10 py-3.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                    />
+                    {selectedAgent && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setSelectedAgent('');
+                          setAgentSearch('');
+                          setSelectedPackage(null);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <span className="material-icons-outlined text-lg">close</span>
+                      </button>
+                    )}
                   </div>
-                  <select 
-                    value={selectedAgency}
-                    onChange={(e) => {
-                      setSelectedAgency(e.target.value);
-                      setSelectedAgent('');
-                      setSelectedPackage(null);
-                    }}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all"
-                  >
-                    <option value="">Agency</option>
-                    {subAgenciesList.map(sub => {
-                      const parent = agenciesList.find(a => a.id === sub.agency_id);
-                      const displayName = parent ? `${parent.name} - ${sub.name}` : sub.name;
-                      return <option key={sub.id} value={sub.id}>{displayName}</option>;
-                    })}
-                  </select>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2 ml-1">
-                    <label className="block text-xs font-semibold text-slate-500">Select Agent</label>
-                    <button 
-                      type="button"
-                      className={`text-primary text-[10px] font-bold uppercase hover:underline ${!selectedAgency ? 'opacity-50 pointer-events-none' : ''}`}
-                      onClick={() => setShowAgentModal(true)}
-                    >
-                      + Add New
-                    </button>
-                  </div>
-                  <select 
-                    value={selectedAgent}
-                    onChange={(e) => {
-                      setSelectedAgent(e.target.value);
-                      if (!e.target.value) setSelectedPackage(null); // reset package if agent cleared
-                    }}
-                    disabled={!selectedAgency || agentsList.length === 0}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all disabled:opacity-50"
-                  >
-                    <option value="">Select Agent</option>
-                    {agentsList.map(agent => (
-                      <option key={agent.id} value={agent.id}>{agent.name}</option>
-                    ))}
-                  </select>
+
+                  {/* Dropdown Results */}
+                  {showAgentDropdown && (
+                    <div className="absolute z-40 left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar">
+                      {agentsList
+                        .filter(agent => {
+                          const search = agentSearch.toLowerCase();
+                          if (!search) return true;
+                          const agencyName = agent.sub_agencies?.agencies?.name || agent.sub_agencies?.name || '';
+                          return agent.name.toLowerCase().includes(search) || agencyName.toLowerCase().includes(search);
+                        })
+                        .map(agent => {
+                          const agencyName = agent.sub_agencies?.agencies?.name || agent.sub_agencies?.name || '';
+                          const isActive = selectedAgent === agent.id;
+                          return (
+                            <button
+                              key={agent.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedAgent(agent.id);
+                                setAgentSearch(agent.name);
+                                setShowAgentDropdown(false);
+                                setSelectedPackage(null);
+                              }}
+                              className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-primary/5 transition-colors ${isActive ? 'bg-primary/10' : ''}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-primary/20 text-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                  {agent.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                  {agent.name}
+                                  {agencyName && <span className="text-slate-400 dark:text-slate-500 font-normal ml-1.5">({agencyName})</span>}
+                                </span>
+                              </div>
+                              {isActive && <span className="material-icons-outlined text-primary text-sm">check</span>}
+                            </button>
+                          );
+                        })}
+                      
+                      {/* No results */}
+                      {agentsList.filter(agent => {
+                        const search = agentSearch.toLowerCase();
+                        if (!search) return true;
+                        const agencyName = agent.sub_agencies?.agencies?.name || agent.sub_agencies?.name || '';
+                        return agent.name.toLowerCase().includes(search) || agencyName.toLowerCase().includes(search);
+                      }).length === 0 && agentSearch && (
+                        <div className="px-4 py-3 text-sm text-slate-400 text-center">No agents found</div>
+                      )}
+
+                      {/* Add New Agent */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAgentDropdown(false);
+                          setShowAgentModal(true);
+                        }}
+                        className="w-full text-left px-4 py-3 border-t border-slate-100 dark:border-slate-800 text-primary text-sm font-bold hover:bg-primary/5 transition-colors flex items-center gap-2"
+                      >
+                        <span className="material-icons-outlined text-sm">add</span>
+                        Add New Agent
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -1455,15 +1545,99 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
       {/* New Agent Modal */}
       {showAgentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 w-full max-w-md sm:min-w-[400px] shadow-2xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 w-full max-w-lg sm:min-w-[480px] shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Add New Agent</h2>
-              <button type="button" onClick={() => setShowAgentModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+              <button type="button" onClick={() => { setShowAgentModal(false); setNewAgentAgencySearch(''); setNewAgentSelectedSubAgency(''); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                 <span className="material-icons-outlined">close</span>
               </button>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Agency Search */}
+              <div ref={newAgentAgencyRef} className="relative">
+                <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Agency *</label>
+                <div className="relative">
+                  <span className="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">business</span>
+                  <input 
+                    type="text" 
+                    value={newAgentAgencySearch}
+                    onChange={(e) => {
+                      setNewAgentAgencySearch(e.target.value);
+                      setShowNewAgentAgencyDropdown(true);
+                      // If text doesn't match an existing sub-agency, mark as 'new'
+                      const match = subAgenciesList.find(s => {
+                        const parent = agenciesList.find(a => a.id === s.agency_id);
+                        const displayName = parent ? `${parent.name} - ${s.name}` : s.name;
+                        return displayName.toLowerCase() === e.target.value.toLowerCase() || s.name.toLowerCase() === e.target.value.toLowerCase();
+                      });
+                      setNewAgentSelectedSubAgency(match ? match.id : e.target.value ? 'new' : '');
+                    }}
+                    onFocus={() => setShowNewAgentAgencyDropdown(true)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all" 
+                    placeholder="Search or create agency..."
+                  />
+                </div>
+
+                {showNewAgentAgencyDropdown && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
+                    {subAgenciesList
+                      .filter(s => {
+                        if (!newAgentAgencySearch) return true;
+                        const parent = agenciesList.find(a => a.id === s.agency_id);
+                        const displayName = parent ? `${parent.name} - ${s.name}` : s.name;
+                        return displayName.toLowerCase().includes(newAgentAgencySearch.toLowerCase());
+                      })
+                      .map(sub => {
+                        const parent = agenciesList.find(a => a.id === sub.agency_id);
+                        const displayName = parent ? `${parent.name} - ${sub.name}` : sub.name;
+                        const isActive = newAgentSelectedSubAgency === sub.id;
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={() => {
+                              setNewAgentSelectedSubAgency(sub.id);
+                              setNewAgentAgencySearch(displayName);
+                              setShowNewAgentAgencyDropdown(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-primary/5 transition-colors ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                          >
+                            {displayName}
+                          </button>
+                        );
+                      })}
+                    
+                    {/* Create new option */}
+                    {newAgentAgencySearch && !subAgenciesList.some(s => {
+                      const parent = agenciesList.find(a => a.id === s.agency_id);
+                      const displayName = parent ? `${parent.name} - ${s.name}` : s.name;
+                      return displayName.toLowerCase() === newAgentAgencySearch.toLowerCase();
+                    }) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewAgentSelectedSubAgency('new');
+                          setShowNewAgentAgencyDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 text-primary text-sm font-bold hover:bg-primary/5 transition-colors flex items-center gap-2"
+                      >
+                        <span className="material-icons-outlined text-sm">add</span>
+                        Create &quot;{newAgentAgencySearch}&quot;
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {newAgentSelectedSubAgency === 'new' && newAgentAgencySearch && (
+                  <p className="text-xs text-primary font-medium mt-1 ml-1 flex items-center gap-1">
+                    <span className="material-icons-outlined text-xs">info</span>
+                    A new agency &quot;{newAgentAgencySearch}&quot; will be created
+                  </p>
+                )}
+              </div>
+
+              {/* Agent Name */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Agent Name *</label>
                 <input 
@@ -1474,6 +1648,8 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                   placeholder="e.g. Jane Doe"
                 />
               </div>
+
+              {/* Contact */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1 ml-1">Contact Info</label>
                 <input 
@@ -1489,7 +1665,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
             <div className="mt-8 flex gap-3">
               <button 
                 type="button" 
-                onClick={() => setShowAgentModal(false)}
+                onClick={() => { setShowAgentModal(false); setNewAgentAgencySearch(''); setNewAgentSelectedSubAgency(''); }}
                 className="flex-1 w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
               >
                 Cancel
@@ -1497,7 +1673,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
               <button 
                 type="button"
                 onClick={handleSaveAgent}
-                disabled={isSavingAgent || !newAgentName.trim()}
+                disabled={isSavingAgent || !newAgentName.trim() || !newAgentSelectedSubAgency}
                 className="flex-1 w-full px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all text-sm disabled:opacity-50"
               >
                 {isSavingAgent ? 'Saving...' : 'Save Agent'}
