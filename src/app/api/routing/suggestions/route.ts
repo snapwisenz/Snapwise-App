@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     let inTerritory = false;
     if (photographer.service_regions && Array.isArray(photographer.service_regions)) {
       const addressLower = address.toLowerCase();
-      inTerritory = photographer.service_regions.some(region => 
+      inTerritory = photographer.service_regions.some((region: string) => 
         addressLower.includes(region.toLowerCase())
       );
       if (inTerritory) {
