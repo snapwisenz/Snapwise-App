@@ -475,21 +475,11 @@ export default function NewJobPage() {
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
         <div className="max-w-3xl mx-auto">
           {/* Top Toggle */}
-          <div className="flex justify-between items-center mb-8">
-            <div className="w-10"></div> {/* Spacer for centering */}
+          <div className="flex justify-center mb-8">
             <div className="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full flex gap-1 shadow-inner">
               <button className="px-8 py-2.5 rounded-full text-sm font-bold bg-white dark:bg-slate-700 text-success shadow-sm transition-all">Confirmed</button>
               <button className="px-8 py-2.5 rounded-full text-sm font-semibold text-slate-500 hover:text-warning dark:hover:text-warning transition-all">Pending</button>
             </div>
-            <button 
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 text-slate-400 hover:text-primary transition-colors bg-slate-100 dark:bg-slate-800 rounded-full"
-              title={showSidebar ? "Hide Tasks Sidebar" : "Show Tasks Sidebar"}
-            >
-              <span className="material-icons-outlined">
-                {showSidebar ? 'last_page' : 'first_page'}
-              </span>
-            </button>
           </div>
 
           {/* Street Address Bar */}
@@ -1117,9 +1107,17 @@ export default function NewJobPage() {
               <span className="material-icons-outlined text-primary">edit_note</span>
               <h2 className="font-bold text-slate-800 dark:text-slate-200">Quick Notes</h2>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Saved
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                Saved
+              </div>
+              <button 
+                onClick={() => setShowSidebar(false)}
+                className="text-sm font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex items-center gap-1"
+              >
+                Hide <span className="material-icons-outlined text-sm">close</span>
+              </button>
             </div>
           </div>
           <div className="flex-1 p-6 flex flex-col overflow-y-auto custom-scrollbar">
@@ -1171,6 +1169,19 @@ export default function NewJobPage() {
           </div>
         </div>
       </aside>
+      )}
+
+      {/* Show Notes Docked Button */}
+      {!showSidebar && (
+        <div className="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-40">
+          <button 
+            onClick={() => setShowSidebar(true)}
+            className="bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 shadow-lg px-4 py-3 rounded-l-2xl flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-300"
+          >
+            <span className="material-icons-outlined text-primary text-sm">content_paste</span>
+            <span className="text-sm font-bold">Show Notes</span>
+          </button>
+        </div>
       )}
       {/* Custom Package Modal */}
       {showCustomModal && (
