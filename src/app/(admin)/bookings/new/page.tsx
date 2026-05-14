@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { createClient } from '@/utils/supabase/client';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 
 const libraries: any[] = ['places'];
 
@@ -470,7 +471,7 @@ export default function NewJobPage() {
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900 relative overflow-hidden">
       {/* Form Section */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
         <div className="max-w-3xl mx-auto">
@@ -1097,6 +1098,19 @@ export default function NewJobPage() {
         </div>
       </div>
 
+      {/* Sticky Tab Toggle */}
+      <div 
+        className={`hidden lg:flex absolute top-12 z-50 transition-all duration-300 ${showSidebar ? 'right-[400px]' : 'right-0'}`}
+      >
+        <button 
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="bg-purple-50 dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 shadow-md py-4 px-1 rounded-l-md hover:bg-purple-100 dark:hover:bg-slate-700 transition-colors text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+          title={showSidebar ? "Hide Tasks Sidebar" : "Show Tasks Sidebar"}
+        >
+          {showSidebar ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      </div>
+
       {/* Right Sidebar (Tasks & Notes) */}
       {showSidebar && (
       <aside className="hidden lg:flex w-[400px] bg-[#f9f5ff] dark:bg-background-dark/40 border-l border-primary/10 flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
@@ -1112,12 +1126,6 @@ export default function NewJobPage() {
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 Saved
               </div>
-              <button 
-                onClick={() => setShowSidebar(false)}
-                className="text-sm font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors flex items-center gap-1"
-              >
-                Hide <span className="material-icons-outlined text-sm">close</span>
-              </button>
             </div>
           </div>
           <div className="flex-1 p-6 flex flex-col overflow-y-auto custom-scrollbar">
@@ -1169,19 +1177,6 @@ export default function NewJobPage() {
           </div>
         </div>
       </aside>
-      )}
-
-      {/* Show Notes Docked Button */}
-      {!showSidebar && (
-        <div className="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-40">
-          <button 
-            onClick={() => setShowSidebar(true)}
-            className="bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 shadow-lg px-4 py-3 rounded-l-2xl flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-300"
-          >
-            <span className="material-icons-outlined text-primary text-sm">content_paste</span>
-            <span className="text-sm font-bold">Show Notes</span>
-          </button>
-        </div>
       )}
       {/* Custom Package Modal */}
       {showCustomModal && (
