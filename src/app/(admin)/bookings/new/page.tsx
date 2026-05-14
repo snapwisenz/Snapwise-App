@@ -64,7 +64,7 @@ export default function NewJobPage() {
   const [packageTbc, setPackageTbc] = useState(false);
   const [keyBoxPin, setKeyBoxPin] = useState('');
   const [keyPinTbc, setKeyPinTbc] = useState(false);
-  const [requiresFloorPlan, setRequiresFloorPlan] = useState(false);
+
 
   // Access & Property Details
   const [accessType, setAccessType] = useState('Vendor will meet onsite');
@@ -438,8 +438,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
         package_details: packageDetails,
         package_tbc: packageTbc,
         key_box_pin: keyBoxPin,
-        key_pin_tbc: keyPinTbc,
-        requires_floor_plan: requiresFloorPlan
+        key_pin_tbc: keyPinTbc
       }]).select().single();
 
       if (error) {
@@ -465,14 +464,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
             task_type: 'core'
           });
         }
-        if (requiresFloorPlan) {
-          tasksToInsert.push({
-            user_id: user.id,
-            job_id: insertedBooking.id,
-            description: "Receive existing floor plan from agent",
-            task_type: 'core'
-          });
-        }
+
         
         if (tasksToInsert.length > 0) {
           const { error: taskError } = await supabase.from('tasks').insert(tasksToInsert);
@@ -496,9 +488,9 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
     const tasks = [];
     if (packageTbc) tasks.push({ title: 'Confirm package details with agent' });
     if (keyPinTbc) tasks.push({ title: 'Confirm key/lockbox details' });
-    if (requiresFloorPlan) tasks.push({ title: 'Receive existing floor plan from agent' });
+
     return tasks;
-  }, [packageTbc, keyPinTbc, requiresFloorPlan]);
+  }, [packageTbc, keyPinTbc]);
 
   return (
     <>
@@ -1139,17 +1131,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
-                  <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    <input 
-                      type="checkbox" 
-                      checked={requiresFloorPlan}
-                      onChange={(e) => setRequiresFloorPlan(e.target.checked)}
-                      className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary" 
-                    />
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Requires Floor Plan Processing</span>
-                  </label>
-                </div>
+
               </div>
             </section>
 
