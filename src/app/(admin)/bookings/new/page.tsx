@@ -67,6 +67,11 @@ export default function NewJobPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [selectedPhotographer, setSelectedPhotographer] = useState<string | null>(null);
 
+  // Manual Scheduling State
+  const [manualSlot, setManualSlot] = useState<{ dayIdx: number, hourIdx: number, photographerId: string } | null>(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictDetails, setConflictDetails] = useState<{ type: 'overlap' | 'travel', message: string, pendingSlot: { dayIdx: number, hourIdx: number, photographerId: string } } | null>(null);
+
   // New Calendar State
   const [activeTab, setActiveTab] = useState('p1');
   const dummyPhotographers = useMemo(() => [
@@ -245,6 +250,53 @@ export default function NewJobPage() {
       fetchSuggestions(address, selectedAgency);
     }
   }, [selectedAgency, address, subAgenciesList]);
+
+  const dummyEventsData = useMemo(() => {
+    const events = [];
+    if (activeTab === 'p1') {
+      events.push({ dayIdx: 1, startHour: 0.25, endHour: 1.0, title: '#4921' });
+      events.push({ dayIdx: 1, startHour: 2.0, endHour: 3.5, title: '#4925' });
+    } else if (activeTab === 'p2') {
+      events.push({ dayIdx: 2, startHour: 0, endHour: 1.0, title: 'Previous Job' });
+    }
+    return events;
+  }, [activeTab]);
+
+  const validateSlot = (proposedTime: { dayIdx: number, hourIdx: number }, eventsArray: any[]) => {
+    const pStart = proposedTime.hourIdx;
+    const pEnd = proposedTime.hourIdx + 1;
+
+    for (const event of eventsArray) {
+      if (event.dayIdx !== proposedTime.dayIdx) continue;
+      
+      if (pStart < event.endHour && pEnd > event.startHour) {
+        return { valid: false, type: 'overlap', message: `Booking Overlap: This slot conflicts directly with an existing job (${event.title}).` };
+      }
+
+      const buffer = 0.5;
+      if (pStart >= event.endHour && (pStart - event.endHour) < buffer) {
+        return { valid: false, type: 'travel', message: `Travel Warning: It takes 25 mins to drive from the previous property, but there is only a ${Math.round((pStart - event.endHour) * 60)} min gap.` };
+      }
+      if (pEnd <= event.startHour && (event.startHour - pEnd) < buffer) {
+        return { valid: false, type: 'travel', message: `Travel Warning: It takes 25 mins to drive to the next property, but there is only a ${Math.round((event.startHour - pEnd) * 60)} min gap.` };
+      }
+    }
+    
+    return { valid: true };
+  };
+
+  const handleGridClick = (dayIdx: number, hourIdx: number) => {
+    const pendingSlot = { dayIdx, hourIdx, photographerId: activeTab };
+    const validation = validateSlot(pendingSlot, dummyEventsData);
+    
+    if (!validation.valid) {
+      setConflictDetails({ type: validation.type as 'overlap' | 'travel', message: validation.message!, pendingSlot });
+      setShowConflictModal(true);
+    } else {
+      setManualSlot(pendingSlot);
+      setSelectedPhotographer(null);
+    }
+  };
 
   const calculateTravel = async (targetAddress: string) => {
     if (!targetAddress || targetAddress === lastCalculatedAddress.current) return;
@@ -827,12 +879,27 @@ export default function NewJobPage() {
                               {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => (
                                 <div key={dayIdx} className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800 relative group/day">
                                   {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(hourIdx => (
-                                    <div key={hourIdx} className="h-20 hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer group/cell transition-colors flex items-center justify-center p-1">
+                                    <div 
+                                      key={hourIdx} 
+                                      onClick={() => handleGridClick(dayIdx, hourIdx)}
+                                      className="h-20 hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer group/cell transition-colors flex items-center justify-center p-1"
+                                    >
                                       <div className="opacity-0 group-hover/cell:opacity-100 w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center bg-white dark:bg-slate-900 transition-all">
                                         <span className="material-symbols-outlined text-slate-400 text-sm">add</span>
                                       </div>
                                     </div>
                                   ))}
+
+                                  {/* Render Manual Selection */}
+                                  {manualSlot && manualSlot.dayIdx === dayIdx && manualSlot.photographerId === activeTab && (
+                                    <div 
+                                      className="absolute left-1 right-1 h-[80px] border-2 border-success ring-2 ring-success/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-success/10 hover:bg-success/20 transition-all z-30 shadow-md"
+                                      style={{ top: `${manualSlot.hourIdx * 80}px` }}
+                                    >
+                                      <span className="material-symbols-outlined text-success text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                                      <span className="text-[9px] font-bold text-success uppercase mt-1 text-center">Manual<br/>Selection</span>
+                                    </div>
+                                  )}
 
                                   {/* Dummy Events based on active tab */}
                                   {activeTab === 'p1' && dayIdx === 1 && (
@@ -1322,6 +1389,47 @@ export default function NewJobPage() {
                 className="flex-1 w-full px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all text-sm disabled:opacity-50"
               >
                 {isSavingAgent ? 'Saving...' : 'Save Agent'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Conflict Warning Modal */}
+      {showConflictModal && conflictDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${conflictDetails.type === 'overlap' ? 'bg-danger/20 text-danger' : 'bg-warning/20 text-warning-700 dark:text-warning'}`}>
+                <span className="material-symbols-outlined">{conflictDetails.type === 'overlap' ? 'error' : 'warning'}</span>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {conflictDetails.type === 'overlap' ? 'Booking Overlap' : 'Travel Warning'}
+              </h2>
+            </div>
+            
+            <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+              {conflictDetails.message}
+            </p>
+
+            <div className="flex gap-3">
+              <button 
+                type="button" 
+                onClick={() => setShowConflictModal(false)}
+                className="flex-1 px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setManualSlot(conflictDetails.pendingSlot);
+                  setSelectedPhotographer(null);
+                  setShowConflictModal(false);
+                }}
+                className={`flex-1 px-4 py-3 text-white rounded-xl font-bold transition-all text-sm ${conflictDetails.type === 'overlap' ? 'bg-danger hover:bg-danger/90' : 'bg-warning-600 hover:bg-warning-600/90'}`}
+              >
+                Override & Book
               </button>
             </div>
           </div>
