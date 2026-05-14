@@ -67,6 +67,20 @@ export default function NewJobPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [selectedPhotographer, setSelectedPhotographer] = useState<string | null>(null);
 
+  // New Calendar State
+  const [activeTab, setActiveTab] = useState('p1');
+  const dummyPhotographers = useMemo(() => [
+    { id: 'p1', name: 'Jackson', initial: 'J', color: 'text-success-700 dark:text-success', bg: 'bg-success/20' },
+    { id: 'p2', name: 'Paige', initial: 'P', color: 'text-warning-700 dark:text-warning', bg: 'bg-warning/20' },
+    { id: 'p3', name: 'Sarah', initial: 'S', color: 'text-primary-700 dark:text-primary', bg: 'bg-primary/20' },
+  ], []);
+
+  useEffect(() => {
+    if (selectedPhotographer) {
+      setActiveTab(selectedPhotographer);
+    }
+  }, [selectedPhotographer]);
+
   const [pricingSettings, setPricingSettings] = useState({
     ground_photo_price: 10,
     drone_photo_price: 15,
@@ -669,13 +683,16 @@ export default function NewJobPage() {
                         ) : idealMode ? (
                           <>
                             {/* Suggestion 1: Ideal Mode */}
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-primary/50 cursor-pointer hover:shadow-md transition-shadow group ring-2 ring-primary/20">
+                            <div 
+                              onClick={() => setSelectedPhotographer('p1')}
+                              className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-shadow group ${selectedPhotographer === 'p1' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-primary/50'}`}
+                            >
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <span className="font-bold text-primary text-lg block">Tuesday, 1:30 PM</span>
+                                  <span className={`font-bold text-lg block ${selectedPhotographer === 'p1' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>Tuesday, 1:30 PM</span>
                                   <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Anchor Slot</span>
                                 </div>
-                                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                {selectedPhotographer === 'p1' && <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-success/20 text-success-700 dark:text-success flex items-center justify-center font-bold text-[10px]">J</div>
@@ -684,12 +701,16 @@ export default function NewJobPage() {
                             </div>
                             
                             {/* Suggestion 2: Ideal Mode */}
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all group">
+                            <div 
+                              onClick={() => setSelectedPhotographer('p2')}
+                              className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all group ${selectedPhotographer === 'p2' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
+                            >
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <span className="font-bold text-slate-900 dark:text-white text-lg">Wednesday, 9:00 AM</span>
+                                  <span className={`font-bold text-lg block ${selectedPhotographer === 'p2' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>Wednesday, 9:00 AM</span>
                                   <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Anchor Slot</span>
                                 </div>
+                                {selectedPhotographer === 'p2' && <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-warning/20 text-warning-700 dark:text-warning flex items-center justify-center font-bold text-[10px]">P</div>
@@ -700,13 +721,16 @@ export default function NewJobPage() {
                         ) : (
                           <>
                             {/* Suggestion 1: Liquid Mode */}
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all group">
+                            <div 
+                              onClick={() => setSelectedPhotographer('p1')}
+                              className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all group ${selectedPhotographer === 'p1' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
+                            >
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <span className="font-bold text-slate-900 dark:text-white text-lg">Tuesday, 11:15 AM</span>
+                                  <span className={`font-bold text-lg block ${selectedPhotographer === 'p1' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>Tuesday, 11:15 AM</span>
                                   <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Liquid Slot</span>
                                 </div>
-                                <span className="material-symbols-outlined text-slate-400 text-sm">schedule</span>
+                                {selectedPhotographer === 'p1' ? <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span> : <span className="material-symbols-outlined text-slate-400 text-sm">schedule</span>}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-success/20 text-success-700 dark:text-success flex items-center justify-center font-bold text-[10px]">J</div>
@@ -715,13 +739,16 @@ export default function NewJobPage() {
                             </div>
 
                             {/* Suggestion 2: Liquid Mode */}
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:shadow-md hover:border-primary/50 transition-all group">
+                            <div 
+                              onClick={() => setSelectedPhotographer('p2')}
+                              className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all group ${selectedPhotographer === 'p2' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
+                            >
                               <div className="flex justify-between items-start mb-2">
                                 <div>
-                                  <span className="font-bold text-slate-900 dark:text-white text-lg">Tuesday, 2:45 PM</span>
+                                  <span className={`font-bold text-lg block ${selectedPhotographer === 'p2' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>Tuesday, 2:45 PM</span>
                                   <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">Liquid Slot</span>
                                 </div>
-                                <span className="material-symbols-outlined text-slate-400 text-sm">schedule</span>
+                                {selectedPhotographer === 'p2' ? <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span> : <span className="material-symbols-outlined text-slate-400 text-sm">schedule</span>}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-warning/20 text-warning-700 dark:text-warning flex items-center justify-center font-bold text-[10px]">P</div>
@@ -737,72 +764,118 @@ export default function NewJobPage() {
                     <div>
                       <div className="flex justify-between items-end mb-4">
                         <h3 className="font-bold text-slate-900 dark:text-white">Live Availability</h3>
-                        <p className="text-sm text-slate-500">Tuesday, Sept 12, 2023</p>
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">May 11 - May 17, 2026</span>
+                          <div className="flex gap-1">
+                            <button className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                              <span className="material-icons-outlined text-sm">chevron_left</span>
+                            </button>
+                            <button className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                              <span className="material-icons-outlined text-sm">chevron_right</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                       
+                      {/* Photographer Tabs */}
+                      <div className="flex gap-2 mb-4 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
+                        {dummyPhotographers.map(p => (
+                          <button 
+                            key={p.id}
+                            onClick={() => setActiveTab(p.id)}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === p.id ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+
                       <div className="border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm overflow-x-auto custom-scrollbar">
                         <div className="min-w-[800px]">
-                          {/* Timeline Header */}
-                          <div className="grid grid-cols-[120px_repeat(10,1fr)] bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                            <div className="p-4 border-r border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 uppercase tracking-wider">OPERATOR</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">08:00 AM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">09:00 AM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">10:00 AM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">11:00 AM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">12:00 PM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">01:00 PM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">02:00 PM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">03:00 PM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">04:00 PM</div>
-                            <div className="p-4 text-center text-xs font-bold text-slate-500">05:00 PM</div>
+                          {/* Timeline Header (Days of Week) */}
+                          <div className="grid grid-cols-[80px_repeat(7,1fr)] bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                            <div className="p-4 border-r border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-400 text-center flex items-center justify-center uppercase tracking-wider">TIME</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">MON 11</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">TUE 12</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">WED 13</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">THU 14</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">FRI 15</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">SAT 16</div>
+                            <div className="p-4 text-center text-xs font-bold text-slate-500">SUN 17</div>
                           </div>
                           
-                          {/* Row 1: Jackson */}
-                          <div className="grid grid-cols-[120px_repeat(10,1fr)] group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                            <div className="p-4 border-r border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-success/20 text-success-700 dark:text-success flex items-center justify-center font-bold text-xs shrink-0">J</div>
-                              <span className="font-bold text-sm text-slate-900 dark:text-white truncate">Jackson</span>
-                            </div>
-                            <div className="p-2 relative flex items-center justify-center">
-                              <div className="w-full h-12 bg-slate-800 dark:bg-slate-700 text-white rounded-lg p-2 text-[10px] overflow-hidden">
-                                <p className="font-bold">#4921</p>
-                                <p className="opacity-70 truncate">Houston Blvd</p>
+                          {/* Grid Rows for Hours */}
+                          <div className="relative">
+                            <div className="grid grid-cols-[80px_repeat(7,1fr)] divide-x divide-slate-100 dark:divide-slate-800">
+                              {/* Time Column */}
+                              <div className="border-r border-slate-200 dark:border-slate-700 flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
+                                {['08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'].map(time => (
+                                  <div key={time} className="h-20 flex items-start justify-center pt-2">
+                                    <span className="text-[10px] font-bold text-slate-400">{time}</span>
+                                  </div>
+                                ))}
                               </div>
-                            </div>
-                            {/* Next slots visual mapping based on mode could be dynamic, for now static visual representation */}
-                            <div className="p-2 flex items-center justify-center">
-                              <div className="w-full h-12 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                                <span className="material-symbols-outlined text-slate-400 text-sm">add</span>
-                              </div>
-                            </div>
-                            <div className="p-2 col-span-3 relative flex items-center justify-center">
-                              <div className="w-full h-12 bg-slate-800 dark:bg-slate-700 text-white rounded-lg p-2 text-[10px] flex justify-between items-center">
-                                <div className="overflow-hidden">
-                                  <p className="font-bold truncate">#4925 - Full Listing Package</p>
-                                  <p className="opacity-70 truncate">Meyerland Area</p>
+                              
+                              {/* Mon-Sun Columns */}
+                              {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => (
+                                <div key={dayIdx} className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800 relative group/day">
+                                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(hourIdx => (
+                                    <div key={hourIdx} className="h-20 hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer group/cell transition-colors flex items-center justify-center p-1">
+                                      <div className="opacity-0 group-hover/cell:opacity-100 w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center bg-white dark:bg-slate-900 transition-all">
+                                        <span className="material-symbols-outlined text-slate-400 text-sm">add</span>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                  {/* Dummy Events based on active tab */}
+                                  {activeTab === 'p1' && dayIdx === 1 && (
+                                    <>
+                                      <div className="absolute top-[20px] left-1 right-1 h-[60px] bg-slate-800 dark:bg-slate-700 text-white rounded-lg p-2 text-[10px] overflow-hidden shadow-sm z-10 border border-slate-700 hover:ring-2 hover:ring-slate-400 transition-all cursor-pointer">
+                                        <p className="font-bold">#4921</p>
+                                        <p className="opacity-70 truncate">Houston Blvd</p>
+                                      </div>
+                                      <div className="absolute top-[160px] left-1 right-1 h-[120px] bg-slate-800 dark:bg-slate-700 text-white rounded-lg p-2 text-[10px] overflow-hidden shadow-sm z-10 flex flex-col justify-between border border-slate-700 hover:ring-2 hover:ring-slate-400 transition-all cursor-pointer">
+                                        <div>
+                                          <p className="font-bold truncate">#4925 - Full Listing</p>
+                                          <p className="opacity-70 truncate">Meyerland Area</p>
+                                        </div>
+                                        <span className="material-symbols-outlined text-sm">verified_user</span>
+                                      </div>
+                                      {/* Highlighted suggestion slot */}
+                                      {selectedPhotographer === 'p1' && (
+                                        <div className={`absolute left-1 right-1 h-[160px] border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md ${idealMode ? 'top-[440px]' : 'top-[260px]'}`}>
+                                          <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                          <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+
+                                  {activeTab === 'p2' && dayIdx === 2 && idealMode && (
+                                    <>
+                                      {/* Highlighted suggestion slot */}
+                                      {selectedPhotographer === 'p2' && (
+                                        <div className="absolute top-[80px] left-1 right-1 h-[160px] border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
+                                          <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                          <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                  {activeTab === 'p2' && dayIdx === 1 && !idealMode && (
+                                    <>
+                                      {/* Highlighted suggestion slot */}
+                                      {selectedPhotographer === 'p2' && (
+                                        <div className="absolute top-[540px] left-1 right-1 h-[160px] border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
+                                          <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                          <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
                                 </div>
-                                <span className="material-symbols-outlined text-sm shrink-0 ml-1">verified_user</span>
-                              </div>
+                              ))}
                             </div>
-                            <div className="p-2 bg-slate-50/50 dark:bg-slate-800/20"></div>
-                            <div className="p-2 flex items-center justify-center">
-                              <div className="w-full h-12 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                                <span className="material-symbols-outlined text-slate-400 text-sm">add</span>
-                              </div>
-                            </div>
-                            <div className="p-2 flex items-center justify-center">
-                              <div className="w-full h-12 border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all">
-                                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                <span className="text-[9px] font-bold text-primary uppercase">Ideal</span>
-                              </div>
-                            </div>
-                            <div className="p-2 relative flex items-center justify-center">
-                              <div className="w-full h-12 bg-slate-800 dark:bg-slate-700 text-white rounded-lg p-2 text-[10px] overflow-hidden">
-                                <p className="font-bold">#4929</p>
-                                <p className="opacity-70 truncate">S. Park Dr</p>
-                              </div>
-                            </div>
-                            <div className="p-2"></div>
                           </div>
                         </div>
                       </div>
