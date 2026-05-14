@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
     const matchedReasons = [];
 
     // Priority 1: Client Preference
-    if (agency?.preferred_photographer_id === photographer.id) {
+    let isClientPreferred = agency?.preferred_photographer_id === photographer.id;
+    if (isClientPreferred) {
       weight += 1000;
       matchedReasons.push('Client Preferred');
     }
@@ -51,12 +52,14 @@ export async function GET(request: NextRequest) {
 
     // Priority 3: Territory Match
     let inTerritory = false;
+    let matchedRegion = null;
     if (photographer.service_regions && Array.isArray(photographer.service_regions)) {
       const addressLower = address.toLowerCase();
-      inTerritory = photographer.service_regions.some((region: string) => 
+      matchedRegion = photographer.service_regions.find((region: string) => 
         addressLower.includes(region.toLowerCase())
       );
-      if (inTerritory) {
+      if (matchedRegion) {
+        inTerritory = true;
         weight += 250;
         matchedReasons.push('In Territory');
       }
@@ -116,12 +119,28 @@ export async function GET(request: NextRequest) {
       matchedReasons.push('First job / 0m drive');
     }
 
+    const firstName = (photographer.full_name || photographer.email || 'The photographer').split(' ')[0];
+    let insight_text = '';
+    
+    if (isClientPreferred) {
+      insight_text = `${firstName} is the preferred photographer for this client.`;
+    } else if (matchedRegion) {
+      insight_text = `${firstName} covers the ${matchedRegion} region.`;
+    } else if (driveTimeMinutes > 0 && driveTimeMinutes <= 45) {
+      insight_text = `${firstName} is already in the area and is a ${driveTimeMinutes}-minute drive away.`;
+    } else if (photographer.is_global_preferred) {
+      insight_text = `${firstName} is a top-rated global default photographer.`;
+    } else {
+      insight_text = `${firstName} is available for this slot.`;
+    }
+
     return {
       photographer_id: photographer.id,
       name: photographer.full_name || photographer.email || 'Unnamed',
       weight,
       reasons: matchedReasons,
-      driveTimeMinutes
+      driveTimeMinutes,
+      insight_text
     };
   }));
 

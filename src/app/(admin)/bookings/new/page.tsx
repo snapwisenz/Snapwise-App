@@ -670,6 +670,9 @@ export default function NewJobPage() {
                                   </div>
                                   {isSelected && <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>}
                                 </div>
+                                {suggestion.insight_text && (
+                                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{suggestion.insight_text}</p>
+                                )}
                                 <div className="flex flex-wrap gap-2 mt-3">
                                   {suggestion.reasons.map((r: string, i: number) => (
                                     <span key={i} className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[10px] font-bold uppercase">
@@ -698,6 +701,7 @@ export default function NewJobPage() {
                                 <div className="w-6 h-6 rounded-full bg-success/20 text-success-700 dark:text-success flex items-center justify-center font-bold text-[10px]">J</div>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Jackson <span className="text-success font-medium">(Optimized Route)</span></p>
                               </div>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Jackson is already in the area and is a 10-minute drive away.</p>
                             </div>
                             
                             {/* Suggestion 2: Ideal Mode */}
@@ -716,6 +720,7 @@ export default function NewJobPage() {
                                 <div className="w-6 h-6 rounded-full bg-warning/20 text-warning-700 dark:text-warning flex items-center justify-center font-bold text-[10px]">P</div>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Paige <span className="text-slate-400 font-medium">(First Job of Day)</span></p>
                               </div>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Paige is the preferred photographer for this client.</p>
                             </div>
                           </>
                         ) : (
@@ -736,6 +741,7 @@ export default function NewJobPage() {
                                 <div className="w-6 h-6 rounded-full bg-success/20 text-success-700 dark:text-success flex items-center justify-center font-bold text-[10px]">J</div>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Jackson <span className="text-slate-500 font-medium">(Arrives +15m Paige Rule)</span></p>
                               </div>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Jackson covers the Richmond region.</p>
                             </div>
 
                             {/* Suggestion 2: Liquid Mode */}
@@ -754,6 +760,7 @@ export default function NewJobPage() {
                                 <div className="w-6 h-6 rounded-full bg-warning/20 text-warning-700 dark:text-warning flex items-center justify-center font-bold text-[10px]">P</div>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Paige <span className="text-slate-500 font-medium">(Arrives +20m Paige Rule)</span></p>
                               </div>
+                              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Paige is available for this slot.</p>
                             </div>
                           </>
                         )}
