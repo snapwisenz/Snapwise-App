@@ -74,6 +74,7 @@ export default function NewJobPage() {
 
   // New Calendar State
   const [activeTab, setActiveTab] = useState('p1');
+  const [showSidebar, setShowSidebar] = useState(true);
   const dummyPhotographers = useMemo(() => [
     { id: 'p1', name: 'Jackson', initial: 'J', color: 'text-success-700 dark:text-success', bg: 'bg-success/20' },
     { id: 'p2', name: 'Paige', initial: 'P', color: 'text-warning-700 dark:text-warning', bg: 'bg-warning/20' },
@@ -474,11 +475,21 @@ export default function NewJobPage() {
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
         <div className="max-w-3xl mx-auto">
           {/* Top Toggle */}
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-between items-center mb-8">
+            <div className="w-10"></div> {/* Spacer for centering */}
             <div className="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full flex gap-1 shadow-inner">
               <button className="px-8 py-2.5 rounded-full text-sm font-bold bg-white dark:bg-slate-700 text-success shadow-sm transition-all">Confirmed</button>
               <button className="px-8 py-2.5 rounded-full text-sm font-semibold text-slate-500 hover:text-warning dark:hover:text-warning transition-all">Pending</button>
             </div>
+            <button 
+              onClick={() => setShowSidebar(!showSidebar)}
+              className="p-2 text-slate-400 hover:text-primary transition-colors bg-slate-100 dark:bg-slate-800 rounded-full"
+              title={showSidebar ? "Hide Tasks Sidebar" : "Show Tasks Sidebar"}
+            >
+              <span className="material-icons-outlined">
+                {showSidebar ? 'last_page' : 'first_page'}
+              </span>
+            </button>
           </div>
 
           {/* Street Address Bar */}
@@ -1097,6 +1108,7 @@ export default function NewJobPage() {
       </div>
 
       {/* Right Sidebar (Tasks & Notes) */}
+      {showSidebar && (
       <aside className="hidden lg:flex w-[400px] bg-[#f9f5ff] dark:bg-background-dark/40 border-l border-primary/10 flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
         {/* Quick Notes */}
         <div className="flex-1 flex flex-col">
@@ -1158,7 +1170,9 @@ export default function NewJobPage() {
             </div>
           </div>
         </div>
+        </div>
       </aside>
+      )}
       {/* Custom Package Modal */}
       {showCustomModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
