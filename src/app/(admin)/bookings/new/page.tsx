@@ -62,6 +62,11 @@ export default function NewJobPage() {
   const [keyPinTbc, setKeyPinTbc] = useState(false);
   const [requiresFloorPlan, setRequiresFloorPlan] = useState(false);
 
+  // Routing & Suggestions State
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [selectedPhotographer, setSelectedPhotographer] = useState<string | null>(null);
+
   const [pricingSettings, setPricingSettings] = useState({
     ground_photo_price: 10,
     drone_photo_price: 15,
@@ -200,6 +205,33 @@ export default function NewJobPage() {
     }
   }, [isLoaded]);
 
+  const fetchSuggestions = async (targetAddress: string, agencyId: string) => {
+    if (!targetAddress || !agencyId) return;
+    setLoadingSuggestions(true);
+    try {
+      const parentAgencyId = subAgenciesList.find(s => s.id === agencyId)?.agency_id;
+      if (!parentAgencyId) return;
+      const res = await fetch(`/api/routing/suggestions?address=${encodeURIComponent(targetAddress)}&agency_id=${encodeURIComponent(parentAgencyId)}`);
+      const data = await res.json();
+      if (data.suggestions) {
+        setSuggestions(data.suggestions);
+        if (data.suggestions.length > 0) {
+          setSelectedPhotographer(data.suggestions[0].photographer_id);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (address && selectedAgency && lastCalculatedAddress.current === address) {
+      fetchSuggestions(address, selectedAgency);
+    }
+  }, [selectedAgency, address, subAgenciesList]);
+
   const calculateTravel = async (targetAddress: string) => {
     if (!targetAddress || targetAddress === lastCalculatedAddress.current) return;
     
@@ -219,6 +251,10 @@ export default function NewJobPage() {
           setOverlapWarning(true);
         }
         lastCalculatedAddress.current = targetAddress;
+      }
+      
+      if (selectedAgency) {
+        fetchSuggestions(targetAddress, selectedAgency);
       }
     } catch (error) {
       console.error(error);
@@ -302,6 +338,7 @@ export default function NewJobPage() {
         sub_agency_id: selectedAgency,
         agent_id: selectedAgent,
         package_id: packageId,
+        photographer_id: selectedPhotographer,
         shoot_location: address,
         start_time: startDate.toISOString(),
         status: 'pending',
@@ -596,7 +633,40 @@ export default function NewJobPage() {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {idealMode ? (
+                        {loadingSuggestions ? (
+                          <div className="col-span-2 py-8 flex flex-col items-center justify-center text-primary/50">
+                            <span className="material-symbols-outlined animate-spin text-3xl mb-2">progress_activity</span>
+                            <p className="text-sm font-semibold">Calculating best routes...</p>
+                          </div>
+                        ) : suggestions.length > 0 ? (
+                          suggestions.map((suggestion, index) => {
+                            const isSelected = selectedPhotographer === suggestion.photographer_id;
+                            return (
+                              <div 
+                                key={suggestion.photographer_id}
+                                onClick={() => setSelectedPhotographer(suggestion.photographer_id)}
+                                className={`bg-white dark:bg-slate-900 p-4 rounded-xl cursor-pointer hover:shadow-md transition-all group ${isSelected ? 'border-2 border-primary ring-2 ring-primary/20 shadow-md' : 'border border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <span className={`font-bold text-lg block ${isSelected ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>{suggestion.name}</span>
+                                    <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">
+                                      {index === 0 ? 'Top Pick' : 'Alternative'} (Score: {suggestion.weight})
+                                    </span>
+                                  </div>
+                                  {isSelected && <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>}
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {suggestion.reasons.map((r: string, i: number) => (
+                                    <span key={i} className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md text-[10px] font-bold uppercase">
+                                      {r}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : idealMode ? (
                           <>
                             {/* Suggestion 1: Ideal Mode */}
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-primary/50 cursor-pointer hover:shadow-md transition-shadow group ring-2 ring-primary/20">
