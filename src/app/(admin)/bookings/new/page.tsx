@@ -56,12 +56,24 @@ export default function NewJobPage() {
   const [newAgentContact, setNewAgentContact] = useState('');
   const [isSavingAgent, setIsSavingAgent] = useState(false);
 
+  // Top UI State
+  const [bookingStatus, setBookingStatus] = useState<'confirmed' | 'pending'>('confirmed');
+
   // Smart Task Fields
   const [packageDetails, setPackageDetails] = useState('');
   const [packageTbc, setPackageTbc] = useState(false);
   const [keyBoxPin, setKeyBoxPin] = useState('');
   const [keyPinTbc, setKeyPinTbc] = useState(false);
   const [requiresFloorPlan, setRequiresFloorPlan] = useState(false);
+
+  // Access & Property Details
+  const [accessType, setAccessType] = useState('Vendor will meet onsite');
+  const [vendorName, setVendorName] = useState('');
+  const [vendorNumber, setVendorNumber] = useState('');
+  const [accessNotes, setAccessNotes] = useState('');
+  const [keyBoxLocation, setKeyBoxLocation] = useState('');
+  const [propertyHighlights, setPropertyHighlights] = useState('');
+  const [propertyNotes, setPropertyNotes] = useState('');
 
   // Routing & Suggestions State
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -400,6 +412,17 @@ export default function NewJobPage() {
       startDate.setDate(startDate.getDate() + 1);
       startDate.setHours(9, 0, 0, 0);
 
+      const combinedNotes = `
+${propertyNotes}
+
+Access Type: ${accessType}
+Vendor Name: ${vendorName}
+Vendor Number: ${vendorNumber}
+${accessType === 'Key / Lockbox' ? `Key/Lockbox Location: ${keyBoxLocation}` : ''}
+${accessNotes ? `Access Notes: ${accessNotes}` : ''}
+${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
+      `.trim();
+
       const { data: insertedBooking, error } = await supabase.from('bookings').insert([{
         user_id: user.id,
         agency_id: subAgency?.agency_id || null,
@@ -409,9 +432,9 @@ export default function NewJobPage() {
         photographer_id: selectedPhotographer,
         shoot_location: address,
         start_time: startDate.toISOString(),
-        status: 'pending',
+        status: bookingStatus,
         deliverables: deliverables,
-        notes: "Generated from UI",
+        notes: combinedNotes,
         package_details: packageDetails,
         package_tbc: packageTbc,
         key_box_pin: keyBoxPin,
@@ -438,7 +461,7 @@ export default function NewJobPage() {
           tasksToInsert.push({
             user_id: user.id,
             job_id: insertedBooking.id,
-            description: "Confirm key box PIN",
+            description: "Confirm key/lockbox details",
             task_type: 'core'
           });
         }
@@ -478,8 +501,14 @@ export default function NewJobPage() {
           {/* Top Toggle */}
           <div className="flex justify-center mb-8">
             <div className="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full flex gap-1 shadow-inner">
-              <button className="px-8 py-2.5 rounded-full text-sm font-bold bg-white dark:bg-slate-700 text-success shadow-sm transition-all">Confirmed</button>
-              <button className="px-8 py-2.5 rounded-full text-sm font-semibold text-slate-500 hover:text-warning dark:hover:text-warning transition-all">Pending</button>
+              <button 
+                onClick={() => setBookingStatus('confirmed')}
+                className={`px-8 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all ${bookingStatus === 'confirmed' ? 'bg-white dark:bg-slate-700 text-success' : 'text-slate-500 hover:text-success'}`}
+              >Confirmed</button>
+              <button 
+                onClick={() => setBookingStatus('pending')}
+                className={`px-8 py-2.5 rounded-full text-sm font-semibold transition-all ${bookingStatus === 'pending' ? 'bg-white dark:bg-slate-700 text-warning shadow-sm' : 'text-slate-500 hover:text-warning dark:hover:text-warning'}`}
+              >Pending</button>
             </div>
           </div>
 
@@ -559,7 +588,7 @@ export default function NewJobPage() {
                     }}
                     className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all"
                   >
-                    <option value="">Select Sub-Agency</option>
+                    <option value="">Agency</option>
                     {subAgenciesList.map(sub => {
                       const parent = agenciesList.find(a => a.id === sub.agency_id);
                       const displayName = parent ? `${parent.name} - ${sub.name}` : sub.name;
@@ -651,6 +680,26 @@ export default function NewJobPage() {
                         </>
                       )}
                     </button>
+                  </div>
+
+                  {/* Package Details & TBC */}
+                  <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 space-y-3">
+                    <label className="block text-xs font-semibold text-slate-500 ml-1">Package Details</label>
+                    <textarea 
+                      value={packageDetails}
+                      onChange={(e) => setPackageDetails(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-primary min-h-[80px]" 
+                      placeholder="e.g. Needs drone shots of the backyard..."
+                    />
+                    <label className="flex items-center gap-2 cursor-pointer ml-1 w-fit">
+                      <input 
+                        type="checkbox" 
+                        checked={packageTbc}
+                        onChange={(e) => setPackageTbc(e.target.checked)}
+                        className="w-4 h-4 text-warning rounded border-slate-300 focus:ring-warning" 
+                      />
+                      <span className="text-xs font-semibold text-slate-500">To Be Confirmed</span>
+                    </label>
                   </div>
 
                 </div>
@@ -988,66 +1037,52 @@ export default function NewJobPage() {
               </details>
             </section>
 
-            {/* Property Details Section */}
+            {/* 4. Access Section */}
             <section className="space-y-6">
               <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-                <span className="material-icons-outlined text-base">home</span> 4. Access &amp; Property Details
+                <span className="material-icons-outlined text-base">key</span> 4. Access Details
               </h2>
               <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 space-y-6 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
-                    <input className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" type="checkbox" />
-                    <span className="text-sm font-medium">Agent will meet onsite</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
-                    <input className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" type="checkbox" defaultChecked />
-                    <span className="text-sm font-medium">Vendor will meet onsite</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer">
-                    <input className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" type="checkbox" />
-                    <span className="text-sm font-medium">Just a section</span>
-                  </label>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Vendor Name</label>
-                    <input className="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" placeholder="Enter name" type="text" defaultValue="Michael Roberts" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Vendor Number</label>
-                    <input className="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" placeholder="(555) 000-0000" type="tel" defaultValue="(555) 123-4567" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-semibold text-slate-500 ml-1">Package Details</label>
-                    <textarea 
-                      value={packageDetails}
-                      onChange={(e) => setPackageDetails(e.target.value)}
-                      className="w-full bg-white border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-primary min-h-[80px]" 
-                      placeholder="e.g. Needs drone shots of the backyard..."
-                    />
-                    <label className="flex items-center gap-2 cursor-pointer mt-1 ml-1 w-fit">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    'Agent will meet onsite',
+                    'Vendor will meet onsite',
+                    'Property is a section',
+                    'Key / Lockbox'
+                  ].map((type) => (
+                    <label key={type} className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${accessType === type ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-slate-700 hover:border-primary/30'}`}>
                       <input 
-                        type="checkbox" 
-                        checked={packageTbc}
-                        onChange={(e) => setPackageTbc(e.target.checked)}
-                        className="w-4 h-4 text-warning rounded border-slate-300 focus:ring-warning" 
+                        type="radio" 
+                        name="accessType"
+                        value={type}
+                        checked={accessType === type}
+                        onChange={(e) => setAccessType(e.target.value)}
+                        className="w-5 h-5 text-primary border-slate-300 focus:ring-primary" 
                       />
-                      <span className="text-xs font-semibold text-slate-500">To Be Confirmed</span>
+                      <span className={`text-sm font-medium ${accessType === type ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>{type}</span>
                     </label>
-                  </div>
+                  ))}
+                </div>
 
-                  <div className="space-y-5">
+                {accessType === 'Key / Lockbox' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 ml-1 mb-2">Key Box PIN</label>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Key/Lockbox Location</label>
+                      <input 
+                        type="text" 
+                        value={keyBoxLocation}
+                        onChange={(e) => setKeyBoxLocation(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" 
+                        placeholder="e.g. Front door railing" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Key/Lockbox PIN</label>
                       <input 
                         type="text" 
                         value={keyBoxPin}
                         onChange={(e) => setKeyBoxPin(e.target.value)}
-                        className="w-full bg-white border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" 
+                        className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" 
                         placeholder="e.g. 1234"
                       />
                       <label className="flex items-center gap-2 cursor-pointer mt-2 ml-1 w-fit">
@@ -1060,24 +1095,78 @@ export default function NewJobPage() {
                         <span className="text-xs font-semibold text-slate-500">To Be Confirmed</span>
                       </label>
                     </div>
-
-                    <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <input 
-                        type="checkbox" 
-                        checked={requiresFloorPlan}
-                        onChange={(e) => setRequiresFloorPlan(e.target.checked)}
-                        className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary" 
-                      />
-                      <span className="text-sm font-semibold text-slate-700">Requires Floor Plan Processing</span>
-                    </label>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Vendor Name</label>
+                    <input 
+                      type="text"
+                      value={vendorName}
+                      onChange={(e) => setVendorName(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" 
+                      placeholder="Enter name" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Vendor Number</label>
+                    <input 
+                      type="tel"
+                      value={vendorNumber}
+                      onChange={(e) => setVendorNumber(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-primary" 
+                      placeholder="(555) 000-0000" 
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Notes</label>
+                    <textarea 
+                      value={accessNotes}
+                      onChange={(e) => setAccessNotes(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:ring-primary min-h-[60px]" 
+                      placeholder="General access notes..." 
+                    />
                   </div>
                 </div>
-                
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Property Highlights</label>
-                    <textarea className="w-full bg-white border-slate-200 rounded-2xl px-4 py-3 text-sm focus:ring-primary min-h-[80px]" placeholder="e.g. Spiral staircase..."></textarea>
-                  </div>
+
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                  <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      checked={requiresFloorPlan}
+                      onChange={(e) => setRequiresFloorPlan(e.target.checked)}
+                      className="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary" 
+                    />
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Requires Floor Plan Processing</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            {/* 5. Property Details Section */}
+            <section className="space-y-6">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                <span className="material-icons-outlined text-base">home</span> 5. Property Details
+              </h2>
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 space-y-6 shadow-sm">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Property Highlights</label>
+                  <textarea 
+                    value={propertyHighlights}
+                    onChange={(e) => setPropertyHighlights(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-primary min-h-[80px]" 
+                    placeholder="e.g. Spiral staircase..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-2 ml-1">Property Notes</label>
+                  <textarea 
+                    value={propertyNotes}
+                    onChange={(e) => setPropertyNotes(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-primary min-h-[80px]" 
+                    placeholder="Example: dog on site"
+                  />
                 </div>
               </div>
             </section>
