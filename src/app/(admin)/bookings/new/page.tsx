@@ -68,6 +68,7 @@ export default function NewJobPage() {
   // Smart Task Fields
   const [packageDetails, setPackageDetails] = useState('');
   const [packageTbc, setPackageTbc] = useState(false);
+  const [fallbackDuration, setFallbackDuration] = useState(120); // minutes: 60 or 120
   const [keyBoxPin, setKeyBoxPin] = useState('');
   const [keyPinTbc, setKeyPinTbc] = useState(false);
 
@@ -94,6 +95,12 @@ export default function NewJobPage() {
   // New Calendar State
   const [activeTab, setActiveTab] = useState('p1');
   const [showSidebar, setShowSidebar] = useState(true);
+  // Derived effective duration (hours) — uses the real package when available, otherwise the fallback
+  const effectiveDuration = selectedPackage?.duration ?? (fallbackDuration / 60);
+
+  // Whether the Smart Schedule section should be enabled
+  const scheduleReady = !!selectedPackage || packageTbc;
+
   const dummyPhotographers = useMemo(() => [
     { id: 'p1', name: 'Jackson', initial: 'J', color: 'text-success-700 dark:text-success', bg: 'bg-success/20' },
     { id: 'p2', name: 'Paige', initial: 'P', color: 'text-warning-700 dark:text-warning', bg: 'bg-warning/20' },
@@ -412,8 +419,8 @@ export default function NewJobPage() {
   };
 
   const handleSaveBooking = async () => {
-    if (!address || !selectedAgent || !selectedPackage) {
-      alert("Please ensure Address, Agent, and Package are selected.");
+    if (!address || !selectedAgent || (!selectedPackage && !packageTbc)) {
+      alert("Please ensure Address, Agent, and Package (or Package TBC) are selected.");
       return;
     }
     
@@ -428,7 +435,10 @@ export default function NewJobPage() {
       
       // Determine deliverables
       let deliverables = [];
-      if (selectedPackage.name === 'Custom Package') {
+      if (!selectedPackage) {
+        // TBC booking — no package chosen yet
+        deliverables.push({ name: 'Package TBC', status: 'pending' });
+      } else if (selectedPackage.name === 'Custom Package') {
         if (customOptions.groundPhotos) deliverables.push({ name: 'Ground Photos', qty: customOptions.groundPhotos, status: 'missing' });
         if (customOptions.drone) deliverables.push({ name: 'Drone Photos', qty: customOptions.drone, status: 'missing' });
         if (customOptions.reels) deliverables.push({ name: 'Reels', qty: customOptions.reels, status: 'missing' });
@@ -439,12 +449,12 @@ export default function NewJobPage() {
         if (customOptions.matterport) deliverables.push({ name: 'Matterport', status: 'missing' });
         if (customOptions.virtualStaging) deliverables.push({ name: 'Virtual Staging', qty: customOptions.virtualStagingQty, notes: customOptions.virtualStagingNotes, status: 'missing' });
       } else {
-        // Fallback or standard package logic could go here
+        // Standard package
         deliverables.push({ name: selectedPackage.name, status: 'missing' });
       }
 
       // We use a dummy package_id if it's custom, otherwise we find the real package ID.
-      const matchedPackage = packages.find(p => p.name === selectedPackage.name);
+      const matchedPackage = selectedPackage ? packages.find(p => p.name === selectedPackage.name) : null;
       const packageId = matchedPackage ? matchedPackage.id : null;
 
       // Arbitrary start time tomorrow 9 AM for demo
@@ -776,6 +786,40 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                       />
                       <span className="text-xs font-semibold text-slate-500">To Be Confirmed</span>
                     </label>
+
+                    {/* Estimated Duration Fallback — shown when TBC or no package selected */}
+                    {(packageTbc || !selectedPackage) && (
+                      <div className="mt-4 p-4 bg-warning/5 border border-warning/20 rounded-xl space-y-2.5">
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                          Estimated Duration <span className="font-normal normal-case text-slate-400">(For Scheduling)</span>
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setFallbackDuration(60)}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                              fallbackDuration === 60
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                            }`}
+                          >
+                            1 Hour
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFallbackDuration(120)}
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                              fallbackDuration === 120
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                            }`}
+                          >
+                            2 Hours
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1">This estimate is used to calculate scheduling gaps and travel times until the actual package is confirmed.</p>
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -783,7 +827,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
             </section>
 
             {/* 3. Schedule & Photographer Section (Cascading) */}
-            <section className={`space-y-6 transition-opacity duration-300 ${selectedPackage ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+            <section className={`space-y-6 transition-opacity duration-300 ${scheduleReady ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
               <details className="group" open>
                 <summary className="flex items-center justify-between cursor-pointer list-none">
                   <h2 className="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
@@ -792,16 +836,19 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                   <span className="material-icons-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
                 </summary>
                 
-                {!selectedPackage ? (
+                {!scheduleReady ? (
                    <div className="mt-6 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center text-slate-500 text-sm">
                    Select a package to calculate required booking duration.
                  </div>
                 ) : (
                   <div className="mt-6 space-y-6">
                     {/* Selected Duration Info */}
-                    <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${!selectedPackage ? 'bg-warning/5 border-warning/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
                        <span className="material-icons-outlined text-slate-500">schedule</span>
-                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Calculating availability for <strong className="text-primary">{selectedPackage.duration}-hour</strong> duration.</span>
+                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                         Calculating availability for <strong className="text-primary">{effectiveDuration}-hour</strong> duration.
+                         {!selectedPackage && <span className="text-warning text-xs ml-1.5 font-semibold">(Estimated)</span>}
+                       </span>
                     </div>
 
                     {/* AI Smart Suggestions */}
