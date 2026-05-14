@@ -1407,6 +1407,18 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                 </div>
               </div>
               
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={packageTbc}
+                    onChange={(e) => setPackageTbc(e.target.checked)}
+                    className="w-5 h-5 text-warning rounded border-slate-300 focus:ring-warning" 
+                  />
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Package Details To Be Confirmed</span>
+                </label>
+              </div>
+
               <div className="pt-4 flex gap-3">
                 <button 
                   type="button"
