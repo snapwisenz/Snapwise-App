@@ -663,9 +663,9 @@ export default function NewJobPage() {
                               >
                                 <div className="flex justify-between items-start mb-2">
                                   <div>
-                                    <span className={`font-bold text-lg block ${isSelected ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>{suggestion.name}</span>
+                                    <span className={`font-bold text-lg block ${isSelected ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>{suggestion.suggested_time || '09:00 AM'} - {suggestion.name}</span>
                                     <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">
-                                      {index === 0 ? 'Top Pick' : 'Alternative'} (Score: {suggestion.weight})
+                                      {index === 0 ? 'Top Pick' : 'Alternative'}
                                     </span>
                                   </div>
                                   {isSelected && <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>}
@@ -849,11 +849,20 @@ export default function NewJobPage() {
                                         <span className="material-symbols-outlined text-sm">verified_user</span>
                                       </div>
                                       {/* Highlighted suggestion slot */}
+                                      {/* Highlighted suggestion slot */}
                                       {selectedPhotographer === 'p1' && (
-                                        <div className={`absolute left-1 right-1 h-[160px] border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md ${idealMode ? 'top-[440px]' : 'top-[260px]'}`}>
-                                          <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                          <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
-                                        </div>
+                                        <>
+                                          <div className={`absolute left-1 right-1 h-[20px] bg-slate-200 dark:bg-slate-700/50 rounded-t-lg border-x-2 border-t-2 border-dashed border-primary/30 z-10 ${idealMode ? 'top-[420px]' : 'top-[240px]'}`} style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
+                                             <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">10m</span>
+                                          </div>
+                                          <div className={`absolute left-1 right-1 h-[160px] border-x-2 border-primary ring-2 ring-primary/20 flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md ${idealMode ? 'top-[440px]' : 'top-[260px]'}`}>
+                                            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                            <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
+                                          </div>
+                                          <div className={`absolute left-1 right-1 h-[40px] bg-slate-200 dark:bg-slate-700/50 rounded-b-lg border-x-2 border-b-2 border-dashed border-primary/30 z-10 ${idealMode ? 'top-[600px]' : 'top-[420px]'}`} style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
+                                            <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">20m</span>
+                                          </div>
+                                        </>
                                       )}
                                     </>
                                   )}
@@ -861,22 +870,40 @@ export default function NewJobPage() {
                                   {activeTab === 'p2' && dayIdx === 2 && idealMode && (
                                     <>
                                       {/* Highlighted suggestion slot */}
+                                      {/* Highlighted suggestion slot */}
                                       {selectedPhotographer === 'p2' && (
-                                        <div className="absolute top-[80px] left-1 right-1 h-[160px] border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
-                                          <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                          <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
-                                        </div>
+                                        <>
+                                          <div className="absolute top-[60px] left-1 right-1 h-[20px] bg-slate-200 dark:bg-slate-700/50 rounded-t-lg border-x-2 border-t-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
+                                             <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">10m</span>
+                                          </div>
+                                          <div className="absolute top-[80px] left-1 right-1 h-[160px] border-x-2 border-primary ring-2 ring-primary/20 flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
+                                            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                            <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
+                                          </div>
+                                          <div className="absolute top-[240px] left-1 right-1 h-[40px] bg-slate-200 dark:bg-slate-700/50 rounded-b-lg border-x-2 border-b-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
+                                            <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">20m</span>
+                                          </div>
+                                        </>
                                       )}
                                     </>
                                   )}
                                   {activeTab === 'p2' && dayIdx === 1 && !idealMode && (
                                     <>
                                       {/* Highlighted suggestion slot */}
+                                      {/* Highlighted suggestion slot */}
                                       {selectedPhotographer === 'p2' && (
-                                        <div className="absolute top-[540px] left-1 right-1 h-[160px] border-2 border-primary ring-2 ring-primary/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
-                                          <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                          <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
-                                        </div>
+                                        <>
+                                          <div className="absolute top-[500px] left-1 right-1 h-[40px] bg-slate-200 dark:bg-slate-700/50 rounded-t-lg border-x-2 border-t-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
+                                             <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">20m</span>
+                                          </div>
+                                          <div className="absolute top-[540px] left-1 right-1 h-[160px] border-x-2 border-primary ring-2 ring-primary/20 flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
+                                            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                            <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
+                                          </div>
+                                          <div className="absolute top-[700px] left-1 right-1 h-[60px] bg-slate-200 dark:bg-slate-700/50 rounded-b-lg border-x-2 border-b-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
+                                            <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">30m</span>
+                                          </div>
+                                        </>
                                       )}
                                     </>
                                   )}

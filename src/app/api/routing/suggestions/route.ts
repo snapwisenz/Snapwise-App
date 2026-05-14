@@ -66,10 +66,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Priority 4: Logistics (Drive time)
-    let driveTimeMinutes = 0;
+    let inboundDriveMinutes = 0;
+    let outboundDriveMinutes = 0;
+    let suggestedTime = '09:00 AM'; // default suggested time
+    let isLastJob = true;
     
-    // Find the immediately preceding booking on that date
-    // We'll look for the latest booking on the selected date to calculate drive time from
     const targetDate = dateStr ? new Date(dateStr) : new Date();
     if (!dateStr) {
        targetDate.setDate(targetDate.getDate() + 1); // default to tomorrow
@@ -79,67 +80,80 @@ export async function GET(request: NextRequest) {
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23,59,59,999);
 
-    const { data: prevBookings } = await supabase
+    const { data: dayBookings } = await supabase
       .from('bookings')
-      .select('shoot_location')
+      .select('start_time, end_time, shoot_location')
       .eq('photographer_id', photographer.id)
       .gte('start_time', startOfDay.toISOString())
       .lte('start_time', endOfDay.toISOString())
-      .order('start_time', { ascending: false })
-      .limit(1);
+      .order('start_time', { ascending: true });
 
-    const previousLocation = prevBookings && prevBookings.length > 0 ? prevBookings[0].shoot_location : null;
+    // For simplicity in this iteration, we append to the end of their existing day
+    let prevLocation = photographer.base_address;
+    let nextLocation = photographer.base_address; // End of day
 
-    if (previousLocation && apiKey) {
+    if (dayBookings && dayBookings.length > 0) {
+      const lastBooking = dayBookings[dayBookings.length - 1];
+      prevLocation = lastBooking.shoot_location;
+      
+      // Calculate suggested time (e.g., 1 hour after previous booking ends)
+      const lastEndTime = new Date(lastBooking.end_time || lastBooking.start_time);
+      lastEndTime.setHours(lastEndTime.getHours() + 1); // Add buffer
+      suggestedTime = lastEndTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    if (apiKey) {
       try {
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
-            previousLocation
-          )}&destinations=${encodeURIComponent(
-            address
-          )}&departure_time=now&key=${apiKey}`
-        );
-        const data = await response.json();
-        if (data.status === 'OK' && data.rows[0].elements[0].status === 'OK') {
-          const durationInSeconds = data.rows[0].elements[0].duration_in_traffic ? 
-            data.rows[0].elements[0].duration_in_traffic.value : 
-            data.rows[0].elements[0].duration.value;
-          
-          driveTimeMinutes = Math.ceil((durationInSeconds / 60) / 10) * 10;
-          weight -= driveTimeMinutes; // deduct drive time from weight
+        // Calculate Inbound
+        if (prevLocation) {
+          const inboundRes = await fetch(
+            `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(prevLocation)}&destinations=${encodeURIComponent(address)}&departure_time=now&key=${apiKey}`
+          );
+          const inboundData = await inboundRes.json();
+          if (inboundData.status === 'OK' && inboundData.rows[0].elements[0].status === 'OK') {
+            const duration = inboundData.rows[0].elements[0].duration_in_traffic ? inboundData.rows[0].elements[0].duration_in_traffic.value : inboundData.rows[0].elements[0].duration.value;
+            inboundDriveMinutes = Math.ceil((duration / 60) / 5) * 5; // round to nearest 5m
+            weight -= inboundDriveMinutes;
+          }
+        }
+
+        // Calculate Outbound
+        if (nextLocation) {
+          const outboundRes = await fetch(
+            `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(address)}&destinations=${encodeURIComponent(nextLocation)}&departure_time=now&key=${apiKey}`
+          );
+          const outboundData = await outboundRes.json();
+          if (outboundData.status === 'OK' && outboundData.rows[0].elements[0].status === 'OK') {
+            const duration = outboundData.rows[0].elements[0].duration_in_traffic ? outboundData.rows[0].elements[0].duration_in_traffic.value : outboundData.rows[0].elements[0].duration.value;
+            outboundDriveMinutes = Math.ceil((duration / 60) / 5) * 5;
+            weight -= outboundDriveMinutes;
+          }
         }
       } catch (e) {
-        console.error('Error fetching drive time for suggestion:', e);
+        console.error('Error fetching dual drive times:', e);
       }
     }
 
-    if (driveTimeMinutes > 0) {
-      matchedReasons.push(`+${driveTimeMinutes}m drive from prev`);
+    const prevContext = (dayBookings && dayBookings.length > 0) ? 'previous shoot' : 'base';
+    const nextContext = isLastJob ? 'home' : 'next shoot';
+    
+    let driveText = '';
+    if (inboundDriveMinutes > 0 || outboundDriveMinutes > 0) {
+      driveText = `${inboundDriveMinutes}m drive from ${prevContext} • ${outboundDriveMinutes}m drive ${nextContext}`;
     } else {
-      matchedReasons.push('First job / 0m drive');
+      driveText = `0m drive (First job of day)`;
     }
 
-    const firstName = (photographer.full_name || photographer.email || 'The photographer').split(' ')[0];
-    let insight_text = '';
-    
-    if (isClientPreferred) {
-      insight_text = `${firstName} is the preferred photographer for this client.`;
-    } else if (matchedRegion) {
-      insight_text = `${firstName} covers the ${matchedRegion} region.`;
-    } else if (driveTimeMinutes > 0 && driveTimeMinutes <= 45) {
-      insight_text = `${firstName} is already in the area and is a ${driveTimeMinutes}-minute drive away.`;
-    } else if (photographer.is_global_preferred) {
-      insight_text = `${firstName} is a top-rated global default photographer.`;
-    } else {
-      insight_text = `${firstName} is available for this slot.`;
-    }
+    let insight_text = driveText;
 
     return {
       photographer_id: photographer.id,
       name: photographer.full_name || photographer.email || 'Unnamed',
+      suggested_time: suggestedTime,
       weight,
       reasons: matchedReasons,
-      driveTimeMinutes,
+      inboundDriveMinutes,
+      outboundDriveMinutes,
       insight_text
     };
   }));
