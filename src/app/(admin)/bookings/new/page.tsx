@@ -492,26 +492,20 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
     }
   };
 
+  const pendingTasks = useMemo(() => {
+    const tasks = [];
+    if (packageTbc) tasks.push({ title: 'Confirm package details with agent' });
+    if (keyPinTbc) tasks.push({ title: 'Confirm key/lockbox details' });
+    if (requiresFloorPlan) tasks.push({ title: 'Receive existing floor plan from agent' });
+    return tasks;
+  }, [packageTbc, keyPinTbc, requiresFloorPlan]);
+
   return (
     <>
       <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900 relative overflow-hidden">
       {/* Form Section */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
         <div className="max-w-3xl mx-auto">
-          {/* Top Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full flex gap-1 shadow-inner">
-              <button 
-                onClick={() => setBookingStatus('confirmed')}
-                className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all ${bookingStatus === 'confirmed' ? 'bg-white dark:bg-slate-700 text-success shadow-sm' : 'bg-transparent shadow-none text-slate-500 hover:text-success'}`}
-              >Confirmed</button>
-              <button 
-                onClick={() => setBookingStatus('pending')}
-                className={`px-8 py-2.5 rounded-full text-sm font-semibold transition-all ${bookingStatus === 'pending' ? 'bg-white dark:bg-slate-700 text-warning shadow-sm' : 'bg-transparent shadow-none text-slate-500 hover:text-warning dark:hover:text-warning'}`}
-              >Pending</button>
-            </div>
-          </div>
-
           {/* Street Address Bar */}
           <div className="mb-10 relative group">
             <span className="material-icons-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">location_on</span>
@@ -1032,6 +1026,21 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Status Toggle (Relocated) */}
+                    <div className="flex justify-center mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                      <div className="bg-slate-100 dark:bg-slate-800 p-1.5 rounded-full flex gap-1 shadow-inner">
+                        <button 
+                          onClick={() => setBookingStatus('confirmed')}
+                          className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all ${bookingStatus === 'confirmed' ? 'bg-white dark:bg-slate-700 text-success shadow-sm' : 'bg-transparent shadow-none text-slate-500 hover:text-success'}`}
+                        >Confirmed</button>
+                        <button 
+                          onClick={() => setBookingStatus('pending')}
+                          className={`px-8 py-2.5 rounded-full text-sm font-semibold transition-all ${bookingStatus === 'pending' ? 'bg-white dark:bg-slate-700 text-warning shadow-sm' : 'bg-transparent shadow-none text-slate-500 hover:text-warning dark:hover:text-warning'}`}
+                        >Pending</button>
+                      </div>
+                    </div>
+
                   </div>
                 )}
               </details>
@@ -1233,21 +1242,22 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
               <span className="material-icons-outlined text-warning">task_alt</span>
               <h2 className="font-bold text-slate-800 dark:text-slate-200">Pending Tasks</h2>
             </div>
-            <span className="text-[10px] font-bold text-slate-400">3 REMAINING</span>
+            <span className="text-[10px] font-bold text-slate-400">{pendingTasks.length} REMAINING</span>
           </div>
           <div className="flex-1 p-6 space-y-4 overflow-y-auto custom-scrollbar">
-            <label className="flex items-center gap-3 group cursor-pointer">
-              <input type="checkbox" className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" />
-              <span className="text-sm text-slate-600 group-hover:text-success transition-colors">Send floorplan draft to agent</span>
-            </label>
-            <label className="flex items-center gap-3 group cursor-pointer">
-              <input type="checkbox" className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" />
-              <span className="text-sm text-slate-600 group-hover:text-success transition-colors">Provide keybox location to Sarah</span>
-            </label>
-            <label className="flex items-center gap-3 group cursor-pointer">
-              <input type="checkbox" className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" />
-              <span className="text-sm text-slate-600 group-hover:text-success transition-colors">Confirm gate code with vendor</span>
-            </label>
+            {pendingTasks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-70">
+                <span className="material-icons-outlined text-4xl mb-2">check_circle</span>
+                <p className="text-sm font-bold">All clear! No pending tasks.</p>
+              </div>
+            ) : (
+              pendingTasks.map((task, idx) => (
+                <label key={idx} className="flex items-center gap-3 group cursor-pointer">
+                  <input type="checkbox" className="w-5 h-5 text-success rounded-lg border-slate-300 focus:ring-success" />
+                  <span className="text-sm text-slate-600 group-hover:text-success transition-colors">{task.title}</span>
+                </label>
+              ))
+            )}
             <button className="w-full py-3 mt-4 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-primary/40 hover:text-primary transition-all">
               + ADD TASK
             </button>
