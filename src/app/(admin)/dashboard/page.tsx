@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { GoogleMap, useJsApiLoader, DirectionsService, Polyline, Marker, InfoWindow } from '@react-google-maps/api';
 
+const libraries: any[] = ['places'];
+
 // --- MOCK DATA FALLBACKS ---
 const MOCK_HOME_BASE = { lat: -36.8485, lng: 174.7633 }; // Auckland as default
 const MOCK_HOME_ADDRESS = "Auckland CBD, New Zealand";
@@ -28,6 +30,7 @@ export default function DashboardPage() {
   const { isLoaded: isMapLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries,
   });
 
   // Map state

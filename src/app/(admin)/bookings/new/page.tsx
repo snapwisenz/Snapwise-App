@@ -1,10 +1,18 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import Script from 'next/script';
+import { useJsApiLoader } from '@react-google-maps/api';
 import { createClient } from '@/utils/supabase/client';
 
+const libraries: any[] = ['places'];
+
 export default function NewJobPage() {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+  });
+
   const [address, setAddress] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const lastCalculatedAddress = useRef<string | null>(null);
@@ -187,10 +195,10 @@ export default function NewJobPage() {
   };
 
   useEffect(() => {
-    if (window.google) {
+    if (isLoaded && window.google) {
       initAutocomplete();
     }
-  }, []);
+  }, [isLoaded]);
 
   const calculateTravel = async (targetAddress: string) => {
     if (!targetAddress || targetAddress === lastCalculatedAddress.current) return;
@@ -358,11 +366,6 @@ export default function NewJobPage() {
 
   return (
     <>
-      <Script 
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`} 
-        strategy="lazyOnload" 
-        onLoad={initAutocomplete} 
-      />
       <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-white dark:bg-slate-900">
       {/* Form Section */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
