@@ -903,7 +903,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                             return (
                               <div 
                                 key={suggestion.photographer_id}
-                                onClick={() => setSelectedPhotographer(suggestion.photographer_id)}
+                                onClick={() => { setSelectedPhotographer(suggestion.photographer_id); setManualSlot(null); }}
                                 className={`bg-white dark:bg-slate-900 p-4 rounded-xl cursor-pointer hover:shadow-md transition-all group ${isSelected ? 'border-2 border-primary ring-2 ring-primary/20 shadow-md' : 'border border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
                               >
                                 <div className="flex justify-between items-start mb-2">
@@ -932,7 +932,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                           <>
                             {/* Suggestion 1: Ideal Mode */}
                             <div 
-                              onClick={() => setSelectedPhotographer('p1')}
+                              onClick={() => { setSelectedPhotographer('p1'); setManualSlot(null); }}
                               className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-shadow group ${selectedPhotographer === 'p1' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-primary/50'}`}
                             >
                               <div className="flex justify-between items-start mb-2">
@@ -951,7 +951,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                             
                             {/* Suggestion 2: Ideal Mode */}
                             <div 
-                              onClick={() => setSelectedPhotographer('p2')}
+                              onClick={() => { setSelectedPhotographer('p2'); setManualSlot(null); }}
                               className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all group ${selectedPhotographer === 'p2' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
                             >
                               <div className="flex justify-between items-start mb-2">
@@ -972,7 +972,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                           <>
                             {/* Suggestion 1: Liquid Mode */}
                             <div 
-                              onClick={() => setSelectedPhotographer('p1')}
+                              onClick={() => { setSelectedPhotographer('p1'); setManualSlot(null); }}
                               className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all group ${selectedPhotographer === 'p1' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
                             >
                               <div className="flex justify-between items-start mb-2">
@@ -991,7 +991,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
 
                             {/* Suggestion 2: Liquid Mode */}
                             <div 
-                              onClick={() => setSelectedPhotographer('p2')}
+                              onClick={() => { setSelectedPhotographer('p2'); setManualSlot(null); }}
                               className={`bg-white dark:bg-slate-900 p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all group ${selectedPhotographer === 'p2' ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}
                             >
                               <div className="flex justify-between items-start mb-2">
@@ -1086,14 +1086,15 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                                   {/* Render Manual Selection */}
                                   {manualSlot && manualSlot.dayIdx === dayIdx && manualSlot.photographerId === activeTab && (() => {
                                     const isConflict = manualSlotHasConflict;
+                                    const slotHeightPx = Math.round(effectiveDuration * 80);
                                     return (
                                       <div 
-                                        className={`absolute left-1 right-1 h-[80px] border-2 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all z-30 ${
+                                        className={`absolute left-1 right-1 border-2 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all z-30 ${
                                           isConflict
                                             ? 'border-red-500 ring-2 ring-red-500/20 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 shadow-lg shadow-red-500/10'
                                             : 'border-success ring-2 ring-success/20 bg-success/10 hover:bg-success/20 shadow-md'
                                         }`}
-                                        style={{ top: `${manualSlot.hourIdx * 80}px` }}
+                                        style={{ top: `${manualSlot.hourIdx * 80}px`, height: `${slotHeightPx}px` }}
                                       >
                                         {isConflict ? (
                                           <AlertTriangle size={14} className="text-red-500" />
@@ -1826,7 +1827,7 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
       {/* Conflict Warning Modal */}
       {showConflictModal && conflictDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800 p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-[90vw] sm:max-w-md shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${conflictDetails.type === 'overlap' ? 'bg-danger/20 text-danger' : 'bg-warning/20 text-warning-700 dark:text-warning'}`}>
                 <span className="material-symbols-outlined">{conflictDetails.type === 'overlap' ? 'error' : 'warning'}</span>
