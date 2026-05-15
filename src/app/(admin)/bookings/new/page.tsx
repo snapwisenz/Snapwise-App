@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { createClient } from '@/utils/supabase/client';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react';
 
 const libraries: any[] = ['places'];
 
@@ -293,6 +293,17 @@ export default function NewJobPage() {
     return events;
   }, [activeTab]);
 
+  // Determine if a suggestion slot (by pixel top/height) overlaps any existing event
+  const checkSlotConflict = (dayIdx: number, topPx: number, heightPx: number, events: any[]) => {
+    const slotStartHour = topPx / 80; // 80px per hour row
+    const slotEndHour = (topPx + heightPx) / 80;
+    for (const event of events) {
+      if (event.dayIdx !== dayIdx) continue;
+      if (slotStartHour < event.endHour && slotEndHour > event.startHour) return true;
+    }
+    return false;
+  };
+
   const validateSlot = (proposedTime: { dayIdx: number, hourIdx: number }, eventsArray: any[]) => {
     const pStart = proposedTime.hourIdx;
     const pEnd = proposedTime.hourIdx + 1;
@@ -315,6 +326,14 @@ export default function NewJobPage() {
     
     return { valid: true };
   };
+
+  // Check manual slot conflict state
+  const manualSlotHasConflict = useMemo(() => {
+    if (!manualSlot) return false;
+    const validation = validateSlot(manualSlot, dummyEventsData);
+    return !validation.valid && validation.type === 'overlap';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualSlot, dummyEventsData]);
 
   const handleGridClick = (dayIdx: number, hourIdx: number) => {
     const pendingSlot = { dayIdx, hourIdx, photographerId: activeTab };
@@ -1065,15 +1084,26 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                                   ))}
 
                                   {/* Render Manual Selection */}
-                                  {manualSlot && manualSlot.dayIdx === dayIdx && manualSlot.photographerId === activeTab && (
-                                    <div 
-                                      className="absolute left-1 right-1 h-[80px] border-2 border-success ring-2 ring-success/20 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-success/10 hover:bg-success/20 transition-all z-30 shadow-md"
-                                      style={{ top: `${manualSlot.hourIdx * 80}px` }}
-                                    >
-                                      <span className="material-symbols-outlined text-success text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                                      <span className="text-[9px] font-bold text-success uppercase mt-1 text-center">Manual<br/>Selection</span>
-                                    </div>
-                                  )}
+                                  {manualSlot && manualSlot.dayIdx === dayIdx && manualSlot.photographerId === activeTab && (() => {
+                                    const isConflict = manualSlotHasConflict;
+                                    return (
+                                      <div 
+                                        className={`absolute left-1 right-1 h-[80px] border-2 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all z-30 ${
+                                          isConflict
+                                            ? 'border-red-500 ring-2 ring-red-500/20 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 shadow-lg shadow-red-500/10'
+                                            : 'border-success ring-2 ring-success/20 bg-success/10 hover:bg-success/20 shadow-md'
+                                        }`}
+                                        style={{ top: `${manualSlot.hourIdx * 80}px` }}
+                                      >
+                                        {isConflict ? (
+                                          <AlertTriangle size={14} className="text-red-500" />
+                                        ) : (
+                                          <span className="material-symbols-outlined text-success text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                                        )}
+                                        <span className={`text-[9px] font-bold uppercase mt-1 text-center ${isConflict ? 'text-red-600 dark:text-red-400' : 'text-success'}`}>Manual<br/>Selection</span>
+                                      </div>
+                                    );
+                                  })()}
 
                                   {/* Dummy Events based on active tab */}
                                   {activeTab === 'p1' && dayIdx === 1 && (
@@ -1091,20 +1121,43 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                                       </div>
                                       {/* Highlighted suggestion slot */}
                                       {/* Highlighted suggestion slot */}
-                                      {selectedPhotographer === 'p1' && (
-                                        <>
-                                          <div className={`absolute left-1 right-1 h-[20px] bg-slate-200 dark:bg-slate-700/50 rounded-t-lg border-x-2 border-t-2 border-dashed border-primary/30 z-10 ${idealMode ? 'top-[420px]' : 'top-[240px]'}`} style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
-                                             <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">10m</span>
-                                          </div>
-                                          <div className={`absolute left-1 right-1 h-[160px] border-x-2 border-primary ring-2 ring-primary/20 flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md ${idealMode ? 'top-[440px]' : 'top-[260px]'}`}>
-                                            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                            <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
-                                          </div>
-                                          <div className={`absolute left-1 right-1 h-[40px] bg-slate-200 dark:bg-slate-700/50 rounded-b-lg border-x-2 border-b-2 border-dashed border-primary/30 z-10 ${idealMode ? 'top-[600px]' : 'top-[420px]'}`} style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
-                                            <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">20m</span>
-                                          </div>
-                                        </>
-                                      )}
+                                      {selectedPhotographer === 'p1' && (() => {
+                                        const slotTop = idealMode ? 440 : 260;
+                                        const bufferTopTop = idealMode ? 420 : 240;
+                                        const bufferBottomTop = idealMode ? 600 : 420;
+                                        const hasConflict = checkSlotConflict(1, slotTop, 160, dummyEventsData);
+                                        const bufferTopConflict = checkSlotConflict(1, bufferTopTop, 20, dummyEventsData);
+                                        const bufferBottomConflict = checkSlotConflict(1, bufferBottomTop, 40, dummyEventsData);
+                                        const borderColor = hasConflict ? 'border-red-500' : 'border-primary';
+                                        const ringColor = hasConflict ? 'ring-red-500/20' : 'ring-primary/20';
+                                        const bgColor = hasConflict ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : 'bg-primary/10 hover:bg-primary/20';
+                                        const textColor = hasConflict ? 'text-red-600 dark:text-red-400' : 'text-primary';
+                                        const shadowClass = hasConflict ? 'shadow-lg shadow-red-500/10' : 'shadow-md';
+                                        const bufferTopBorder = bufferTopConflict || hasConflict ? 'border-red-500/30' : 'border-primary/30';
+                                        const bufferTopBg = bufferTopConflict || hasConflict ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700/50';
+                                        const bufferTopStripe = bufferTopConflict || hasConflict ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.08) 5px, rgba(239,68,68,0.08) 10px)' : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
+                                        const bufferBottomBorder = bufferBottomConflict || hasConflict ? 'border-red-500/30' : 'border-primary/30';
+                                        const bufferBottomBg = bufferBottomConflict || hasConflict ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700/50';
+                                        const bufferBottomStripe = bufferBottomConflict || hasConflict ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.08) 5px, rgba(239,68,68,0.08) 10px)' : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
+                                        return (
+                                          <>
+                                            <div className={`absolute left-1 right-1 h-[20px] ${bufferTopBg} rounded-t-lg border-x-2 border-t-2 border-dashed ${bufferTopBorder} z-20 top-[${bufferTopTop}px]`} style={{ top: `${bufferTopTop}px`, backgroundImage: bufferTopStripe }}>
+                                               <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">10m</span>
+                                            </div>
+                                            <div className={`absolute left-1 right-1 h-[160px] border-x-2 ${borderColor} ring-2 ${ringColor} flex flex-col items-center justify-center cursor-pointer ${bgColor} transition-all z-30 ${shadowClass}`} style={{ top: `${slotTop}px` }}>
+                                              {hasConflict ? (
+                                                <AlertTriangle size={14} className="text-red-500" />
+                                              ) : (
+                                                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                              )}
+                                              <span className={`text-[9px] font-bold ${textColor} uppercase mt-1 text-center`}>Selected<br/>Slot</span>
+                                            </div>
+                                            <div className={`absolute left-1 right-1 h-[40px] ${bufferBottomBg} rounded-b-lg border-x-2 border-b-2 border-dashed ${bufferBottomBorder} z-20`} style={{ top: `${bufferBottomTop}px`, backgroundImage: bufferBottomStripe }}>
+                                              <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">20m</span>
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
                                     </>
                                   )}
 
@@ -1112,40 +1165,80 @@ ${propertyHighlights ? `Property Highlights: ${propertyHighlights}` : ''}
                                     <>
                                       {/* Highlighted suggestion slot */}
                                       {/* Highlighted suggestion slot */}
-                                      {selectedPhotographer === 'p2' && (
-                                        <>
-                                          <div className="absolute top-[60px] left-1 right-1 h-[20px] bg-slate-200 dark:bg-slate-700/50 rounded-t-lg border-x-2 border-t-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
-                                             <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">10m</span>
-                                          </div>
-                                          <div className="absolute top-[80px] left-1 right-1 h-[160px] border-x-2 border-primary ring-2 ring-primary/20 flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
-                                            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                            <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
-                                          </div>
-                                          <div className="absolute top-[240px] left-1 right-1 h-[40px] bg-slate-200 dark:bg-slate-700/50 rounded-b-lg border-x-2 border-b-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
-                                            <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">20m</span>
-                                          </div>
-                                        </>
-                                      )}
+                                      {selectedPhotographer === 'p2' && (() => {
+                                        const hasConflict = checkSlotConflict(2, 80, 160, dummyEventsData);
+                                        const bufferTopConflict = checkSlotConflict(2, 60, 20, dummyEventsData);
+                                        const bufferBottomConflict = checkSlotConflict(2, 240, 40, dummyEventsData);
+                                        const borderColor = hasConflict ? 'border-red-500' : 'border-primary';
+                                        const ringColor = hasConflict ? 'ring-red-500/20' : 'ring-primary/20';
+                                        const bgColor = hasConflict ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : 'bg-primary/10 hover:bg-primary/20';
+                                        const textColor = hasConflict ? 'text-red-600 dark:text-red-400' : 'text-primary';
+                                        const shadowClass = hasConflict ? 'shadow-lg shadow-red-500/10' : 'shadow-md';
+                                        const bufferTopBorder = bufferTopConflict || hasConflict ? 'border-red-500/30' : 'border-primary/30';
+                                        const bufferTopBg = bufferTopConflict || hasConflict ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700/50';
+                                        const bufferTopStripe = bufferTopConflict || hasConflict ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.08) 5px, rgba(239,68,68,0.08) 10px)' : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
+                                        const bufferBottomBorder = bufferBottomConflict || hasConflict ? 'border-red-500/30' : 'border-primary/30';
+                                        const bufferBottomBg = bufferBottomConflict || hasConflict ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700/50';
+                                        const bufferBottomStripe = bufferBottomConflict || hasConflict ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.08) 5px, rgba(239,68,68,0.08) 10px)' : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
+                                        return (
+                                          <>
+                                            <div className={`absolute top-[60px] left-1 right-1 h-[20px] ${bufferTopBg} rounded-t-lg border-x-2 border-t-2 border-dashed ${bufferTopBorder} z-20`} style={{ backgroundImage: bufferTopStripe }}>
+                                               <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">10m</span>
+                                            </div>
+                                            <div className={`absolute top-[80px] left-1 right-1 h-[160px] border-x-2 ${borderColor} ring-2 ${ringColor} flex flex-col items-center justify-center cursor-pointer ${bgColor} transition-all z-30 ${shadowClass}`}>
+                                              {hasConflict ? (
+                                                <AlertTriangle size={14} className="text-red-500" />
+                                              ) : (
+                                                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                              )}
+                                              <span className={`text-[9px] font-bold ${textColor} uppercase mt-1 text-center`}>Selected<br/>Slot</span>
+                                            </div>
+                                            <div className={`absolute top-[240px] left-1 right-1 h-[40px] ${bufferBottomBg} rounded-b-lg border-x-2 border-b-2 border-dashed ${bufferBottomBorder} z-20`} style={{ backgroundImage: bufferBottomStripe }}>
+                                              <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">20m</span>
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
                                     </>
                                   )}
                                   {activeTab === 'p2' && dayIdx === 1 && !idealMode && (
                                     <>
                                       {/* Highlighted suggestion slot */}
                                       {/* Highlighted suggestion slot */}
-                                      {selectedPhotographer === 'p2' && (
-                                        <>
-                                          <div className="absolute top-[500px] left-1 right-1 h-[40px] bg-slate-200 dark:bg-slate-700/50 rounded-t-lg border-x-2 border-t-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
-                                             <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">20m</span>
-                                          </div>
-                                          <div className="absolute top-[540px] left-1 right-1 h-[160px] border-x-2 border-primary ring-2 ring-primary/20 flex flex-col items-center justify-center cursor-pointer bg-primary/10 hover:bg-primary/20 transition-all z-20 shadow-md">
-                                            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                            <span className="text-[9px] font-bold text-primary uppercase mt-1 text-center">Selected<br/>Slot</span>
-                                          </div>
-                                          <div className="absolute top-[700px] left-1 right-1 h-[60px] bg-slate-200 dark:bg-slate-700/50 rounded-b-lg border-x-2 border-b-2 border-dashed border-primary/30 z-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)' }}>
-                                            <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">30m</span>
-                                          </div>
-                                        </>
-                                      )}
+                                      {selectedPhotographer === 'p2' && (() => {
+                                        const hasConflict = checkSlotConflict(1, 540, 160, dummyEventsData);
+                                        const bufferTopConflict = checkSlotConflict(1, 500, 40, dummyEventsData);
+                                        const bufferBottomConflict = checkSlotConflict(1, 700, 60, dummyEventsData);
+                                        const borderColor = hasConflict ? 'border-red-500' : 'border-primary';
+                                        const ringColor = hasConflict ? 'ring-red-500/20' : 'ring-primary/20';
+                                        const bgColor = hasConflict ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' : 'bg-primary/10 hover:bg-primary/20';
+                                        const textColor = hasConflict ? 'text-red-600 dark:text-red-400' : 'text-primary';
+                                        const shadowClass = hasConflict ? 'shadow-lg shadow-red-500/10' : 'shadow-md';
+                                        const bufferTopBorder = bufferTopConflict || hasConflict ? 'border-red-500/30' : 'border-primary/30';
+                                        const bufferTopBg = bufferTopConflict || hasConflict ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700/50';
+                                        const bufferTopStripe = bufferTopConflict || hasConflict ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.08) 5px, rgba(239,68,68,0.08) 10px)' : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
+                                        const bufferBottomBorder = bufferBottomConflict || hasConflict ? 'border-red-500/30' : 'border-primary/30';
+                                        const bufferBottomBg = bufferBottomConflict || hasConflict ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-200 dark:bg-slate-700/50';
+                                        const bufferBottomStripe = bufferBottomConflict || hasConflict ? 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(239,68,68,0.08) 5px, rgba(239,68,68,0.08) 10px)' : 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
+                                        return (
+                                          <>
+                                            <div className={`absolute top-[500px] left-1 right-1 h-[40px] ${bufferTopBg} rounded-t-lg border-x-2 border-t-2 border-dashed ${bufferTopBorder} z-20`} style={{ backgroundImage: bufferTopStripe }}>
+                                               <span className="text-[8px] text-slate-400 absolute bottom-0 left-1 font-bold">20m</span>
+                                            </div>
+                                            <div className={`absolute top-[540px] left-1 right-1 h-[160px] border-x-2 ${borderColor} ring-2 ${ringColor} flex flex-col items-center justify-center cursor-pointer ${bgColor} transition-all z-30 ${shadowClass}`}>
+                                              {hasConflict ? (
+                                                <AlertTriangle size={14} className="text-red-500" />
+                                              ) : (
+                                                <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                              )}
+                                              <span className={`text-[9px] font-bold ${textColor} uppercase mt-1 text-center`}>Selected<br/>Slot</span>
+                                            </div>
+                                            <div className={`absolute top-[700px] left-1 right-1 h-[60px] ${bufferBottomBg} rounded-b-lg border-x-2 border-b-2 border-dashed ${bufferBottomBorder} z-20`} style={{ backgroundImage: bufferBottomStripe }}>
+                                              <span className="text-[8px] text-slate-400 absolute top-0 left-1 font-bold">30m</span>
+                                            </div>
+                                          </>
+                                        );
+                                      })()}
                                     </>
                                   )}
                                 </div>
