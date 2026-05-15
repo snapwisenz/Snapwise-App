@@ -37,7 +37,7 @@ export default function NewJobPage() {
   const [agentsList, setAgentsList] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<{name: string, duration: number, price: string, photos?: string} | null>(null);
-  const [idealMode, setIdealMode] = useState(true);
+  const [idealMode, setIdealMode] = useState(false);
 
   // Custom Package State
   const [showCustomModal, setShowCustomModal] = useState(false);

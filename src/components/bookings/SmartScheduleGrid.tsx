@@ -101,7 +101,7 @@ export const SmartScheduleGrid = memo(function SmartScheduleGrid({
                   <h3 className="font-bold text-slate-900 dark:text-white">AI Smart Suggestions</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Ideal Mode (Anchors)</span>
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Show All Available Slots</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input 
                       type="checkbox" 
