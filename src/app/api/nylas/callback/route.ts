@@ -35,6 +35,7 @@ export async function GET(request: Request) {
         user_id: user.id,
         nylas_grant_id: grantId,
         nylas_account_id: grantId,
+        nylas_connected_email: email,
       }, { onConflict: 'user_id' });
 
     if (error) {
