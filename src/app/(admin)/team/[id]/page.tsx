@@ -34,6 +34,7 @@ export default function PhotographerProfilePage() {
     
     const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
       fields: ['formatted_address', 'geometry'],
+      componentRestrictions: { country: 'nz' },
     });
 
     autocomplete.addListener('place_changed', () => {

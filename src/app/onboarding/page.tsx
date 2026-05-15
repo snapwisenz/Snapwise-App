@@ -83,6 +83,7 @@ export default function OnboardingPage() {
     
     const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
       fields: ['formatted_address', 'name'],
+      componentRestrictions: { country: 'nz' },
     });
 
     autocomplete.addListener('place_changed', () => {

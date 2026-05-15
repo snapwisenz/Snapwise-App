@@ -223,6 +223,7 @@ export default function NewJobPage() {
     
     const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
       fields: ['formatted_address', 'geometry'],
+      componentRestrictions: { country: 'nz' },
     });
 
     autocomplete.addListener('place_changed', () => {
