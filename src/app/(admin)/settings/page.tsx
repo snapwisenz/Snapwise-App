@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { RefreshCcw, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PricingRule {
   id: string;
@@ -86,7 +87,7 @@ export default function SettingsPage() {
       setSettings(prev => ({ ...prev, isCalendarConnected: false, nylas_connected_email: '' }));
     } catch (error) {
       console.error(error);
-      alert('Error disconnecting calendar');
+      toast.error('Error disconnecting calendar');
     } finally {
       setDisconnecting(false);
     }
@@ -101,7 +102,7 @@ export default function SettingsPage() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      alert('You must be logged in');
+      toast.error('You must be logged in');
       setSaving(false);
       return;
     }
@@ -129,9 +130,9 @@ export default function SettingsPage() {
     setSaving(false);
     if (error) {
       console.error(error);
-      alert('Error saving settings');
+      toast.error('Error saving settings');
     } else {
-      alert('Settings saved successfully!');
+      toast.success('Settings saved successfully!');
     }
   };
 
