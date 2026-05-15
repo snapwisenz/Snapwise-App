@@ -233,6 +233,36 @@ export const SmartScheduleGrid = memo(function SmartScheduleGrid({
                             </div>
                           ))}
 
+                          {/* Render Events */}
+                          {events.filter(e => e.dayIdx === dayIdx).map((e, idx) => {
+                            const startOffset = e.startHour - 8;
+                            const heightHours = e.endHour - e.startHour;
+                            
+                            // Prevent rendering if completely outside our 8am-6pm grid
+                            if (startOffset + heightHours <= 0 || startOffset >= 10) return null;
+                            
+                            // Clamp to grid boundaries
+                            const clampedOffset = Math.max(0, startOffset);
+                            const clampedEnd = Math.min(10, startOffset + heightHours);
+                            const clampedHeight = clampedEnd - clampedOffset;
+
+                            const topPx = clampedOffset * 80;
+                            const heightPx = clampedHeight * 80;
+
+                            return (
+                              <div 
+                                key={`evt-${e.id}-${idx}`}
+                                className={`absolute left-1 right-1 border-l-4 rounded-md p-1.5 z-10 overflow-hidden shadow-sm ${e.isExternal ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-400'}`}
+                                style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+                              >
+                                <div className="text-[10px] font-bold leading-tight line-clamp-2 truncate" style={{ color: e.isExternal ? '#f97316' : '#64748b' }}>
+                                  {e.isExternal && <span className="material-icons-outlined text-[10px] mr-1 align-text-bottom">event</span>}
+                                  {e.title}
+                                </div>
+                              </div>
+                            );
+                          })}
+
                           {/* Render Manual Selection */}
                           {manualSlot && manualSlot.dayIdx === dayIdx && manualSlot.photographerId === activeTab && (
                             <CalendarSlot 
