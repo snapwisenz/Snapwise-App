@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useState } from 'react';
 import { CalendarSlot } from './CalendarSlot';
 import { format, addDays } from 'date-fns';
 
@@ -46,6 +46,8 @@ export const SmartScheduleGrid = memo(function SmartScheduleGrid({
   events,
   checkSlotConflict
 }: SmartScheduleGridProps) {
+
+  const [hoveredSlot, setHoveredSlot] = useState<{ dayIdx: number, hourIdx: number } | null>(null);
 
   // Dynamically extract photographers from suggestions, or leave empty.
   const photographers = useMemo(() => {
@@ -207,7 +209,7 @@ export const SmartScheduleGrid = memo(function SmartScheduleGrid({
                   </div>
                   
                   {/* Grid Rows for Hours */}
-                  <div className="relative">
+                  <div className="relative" onMouseLeave={() => setHoveredSlot(null)}>
                     <div className="grid grid-cols-[80px_repeat(7,1fr)] divide-x divide-slate-100 dark:divide-slate-800">
                       {/* Time Column */}
                       <div className="border-r border-slate-200 dark:border-slate-700 flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
@@ -225,13 +227,25 @@ export const SmartScheduleGrid = memo(function SmartScheduleGrid({
                             <div 
                               key={hourIdx} 
                               onClick={() => handleGridClick(dayIdx, hourIdx)}
-                              className="h-20 hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer group/cell transition-colors flex items-center justify-center p-1"
+                              onMouseEnter={() => setHoveredSlot({ dayIdx, hourIdx })}
+                              className="h-20 hover:bg-slate-50 dark:hover:bg-slate-800/30 cursor-pointer transition-colors flex items-center justify-center p-1 relative"
                             >
-                              <div className="opacity-0 group-hover/cell:opacity-100 w-full h-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center bg-white dark:bg-slate-900 transition-all">
-                                <span className="material-symbols-outlined text-slate-400 text-sm">add</span>
-                              </div>
+                              {/* Empty cell, hover effect is handled by the overlay below */}
                             </div>
                           ))}
+
+                          {/* Render Hover Preview Overlay */}
+                          {hoveredSlot && hoveredSlot.dayIdx === dayIdx && (
+                            <div 
+                              className="absolute left-1 right-1 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg flex items-center justify-center bg-white/80 dark:bg-slate-900/80 transition-all pointer-events-none z-10"
+                              style={{ 
+                                top: `${hoveredSlot.hourIdx * 80 + 4}px`, 
+                                height: `${Math.round(effectiveDuration * 80) - 8}px`
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-slate-400 text-sm">add</span>
+                            </div>
+                          )}
 
                           {/* Render Events */}
                           {events.filter(e => e.dayIdx === dayIdx).map((e, idx) => {
