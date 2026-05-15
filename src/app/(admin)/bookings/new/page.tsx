@@ -271,8 +271,33 @@ export default function NewJobPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAgent, address, agentsList]);
 
-  const eventsArray: any[] = useMemo(() => [], []);
+  const [eventsArray, setEventsArray] = useState<any[]>([]);
 
+  useEffect(() => {
+    if (!activeTab) {
+      setEventsArray([]);
+      return;
+    }
+    async function fetchEvents() {
+      try {
+        const today = new Date();
+        const start = new Date(today);
+        start.setHours(0,0,0,0);
+        const end = new Date(today);
+        end.setDate(end.getDate() + 7);
+        end.setHours(23,59,59,999);
+        
+        const res = await fetch(`/api/calendar/events?photographer_id=${activeTab}&start=${start.toISOString()}&end=${end.toISOString()}`);
+        const data = await res.json();
+        if (data.events) {
+          setEventsArray(data.events);
+        }
+      } catch (err) {
+        console.error('Error fetching events:', err);
+      }
+    }
+    fetchEvents();
+  }, [activeTab]);
   const checkSlotConflict = useCallback((dayIdx: number, topPx: number, heightPx: number, events: any[]) => {
     const slotStartHour = topPx / 80;
     const slotEndHour = (topPx + heightPx) / 80;
