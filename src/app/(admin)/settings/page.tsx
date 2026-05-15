@@ -200,14 +200,18 @@ export default function SettingsPage() {
                 <h3 className="font-bold text-slate-800 dark:text-slate-200">Google / Outlook Calendar</h3>
                 <p className="text-sm text-slate-500 mt-1">Sync your bookings directly to your personal calendar.</p>
                 <div className="mt-3 flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${settings.isCalendarConnected ? 'bg-success' : 'bg-slate-400'}`}></div>
-                  <span className={`text-sm font-semibold ${settings.isCalendarConnected ? 'text-success' : 'text-slate-700 dark:text-slate-300'}`}>
-                    {settings.isCalendarConnected ? (
-                      settings.nylas_connected_email 
-                        ? `Connected as ${settings.nylas_connected_email}` 
-                        : 'Connected'
-                    ) : 'Not Connected'}
-                  </span>
+                  {settings.isCalendarConnected ? (
+                    <span className="text-sm font-semibold text-green-600 dark:text-green-500">
+                      ● Connected as {settings.nylas_connected_email || 'Unknown'}
+                    </span>
+                  ) : (
+                    <>
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Not Connected
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3">

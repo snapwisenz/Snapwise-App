@@ -10,7 +10,7 @@ export async function POST() {
       return NextResponse.json({ error: 'Not logged in' }, { status: 401 });
     }
 
-    const { error } = await supabase
+    const { error: settingsError } = await supabase
       .from('agency_settings')
       .update({
         nylas_grant_id: null,
@@ -19,8 +19,16 @@ export async function POST() {
       })
       .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Error disconnecting calendar:', error);
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        nylas_grant_id: null,
+        nylas_account_id: null,
+      })
+      .eq('id', user.id);
+
+    if (settingsError || profileError) {
+      console.error('Error disconnecting calendar:', settingsError || profileError);
       return NextResponse.json({ error: 'Failed to disconnect calendar' }, { status: 500 });
     }
 
