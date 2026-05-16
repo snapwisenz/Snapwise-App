@@ -49,15 +49,28 @@ export async function GET(request: Request) {
   let externalEvents: any[] = [];
   if (profile?.nylas_grant_id) {
     try {
+      const startTimeSec = Math.floor(startDate.getTime() / 1000);
+      const endTimeSec = Math.floor(endDate.getTime() / 1000);
+
+      console.log('\n--- NYLAS FETCH START ---');
+      console.log('Grant ID:', profile.nylas_grant_id);
+      console.log('Calendar ID: primary');
+      console.log('Start Time:', startDate.toISOString(), '(', startTimeSec, ')');
+      console.log('End Time:', endDate.toISOString(), '(', endTimeSec, ')');
+
       const nylasEvents = await nylas.events.list({
         identifier: profile.nylas_grant_id,
         queryParams: {
           calendarId: 'primary',
-          start: Math.floor(startDate.getTime() / 1000),
-          end: Math.floor(endDate.getTime() / 1000),
+          start: startTimeSec,
+          end: endTimeSec,
         } as any
       });
       
+      console.log('--- NYLAS FETCH RESPONSE ---');
+      console.log(JSON.stringify(nylasEvents, null, 2));
+      console.log('----------------------------\n');
+
       if (nylasEvents.data) {
         externalEvents = nylasEvents.data
           .filter((ne: any) => !bookings?.some(b => b.nylas_event_id === ne.id))
@@ -83,8 +96,12 @@ export async function GET(request: Request) {
             };
           }).filter((e: any) => e.startTime > 0);
       }
-    } catch (err) {
-      console.error('Error fetching Nylas events:', err);
+    } catch (err: any) {
+      console.error('\n--- NYLAS FETCH ERROR ---');
+      console.error('Failed to fetch events from Nylas:', err);
+      console.error('Error Message:', err.message);
+      console.error('Raw Error:', JSON.stringify(err, null, 2));
+      console.error('-------------------------\n');
     }
   }
 
