@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect('/onboarding');
   }
 
-  const role = profile.role || 'photographer';
+  const role = profile.role || 'staff';
   const fullName = `${profile.first_name} ${profile.last_name}`;
   const roleTitle = role.charAt(0).toUpperCase() + role.slice(1);
   const avatarUrl = profile.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=random';
