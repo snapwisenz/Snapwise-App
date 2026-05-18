@@ -130,6 +130,28 @@ export default function SettingsTeamPage() {
     }
   };
 
+  const handleRemoveUser = async () => {
+    if (!selectedProfile) return;
+    const confirmed = window.confirm(`Are you sure you want to completely remove ${selectedProfile.first_name || 'this user'}? Their system access will be permanently revoked.`);
+    if (!confirmed) return;
+    
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/team/remove?id=${selectedProfile.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove user');
+      
+      alert('User removed successfully.');
+      closeEditModal();
+      fetchProfiles();
+    } catch (err: any) {
+      console.error(err);
+      alert(`Error removing user: ${err.message}. Make sure SUPABASE_SERVICE_ROLE_KEY is configured in Vercel.`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // --- Invite Logic ---
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -430,20 +452,30 @@ export default function SettingsTeamPage() {
               )}
             </div>
             
-            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex gap-3">
+            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
               <button 
-                onClick={closeEditModal}
-                className="flex-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleSaveProfile}
+                onClick={handleRemoveUser}
                 disabled={isSaving}
-                className="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="text-error font-bold text-sm px-4 py-3 hover:bg-error/10 rounded-xl transition-all"
+                title="Permanently remove user and revoke access"
               >
-                {isSaving ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : 'Save Changes'}
+                Remove User
               </button>
+              <div className="flex gap-3 flex-1 justify-end">
+                <button 
+                  onClick={closeEditModal}
+                  className="px-6 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className="px-8 bg-primary text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  {isSaving ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
