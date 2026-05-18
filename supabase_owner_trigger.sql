@@ -137,7 +137,7 @@ CREATE POLICY "Users can view own profile"
 CREATE POLICY "Owners and admins can view all profiles"
   ON public.profiles FOR SELECT TO authenticated
   USING (
-    public.get_user_role() IN ('owner', 'admin')
+    lower(public.get_user_role()) IN ('owner', 'admin')
   );
 
 -- 3. Users can update their own profile
@@ -150,7 +150,7 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Owners and admins can update all profiles"
   ON public.profiles FOR UPDATE TO authenticated
   USING (
-    public.get_user_role() IN ('owner', 'admin')
+    lower(public.get_user_role()) IN ('owner', 'admin')
   );
 
 -- 5. Service role can insert (trigger)
@@ -167,5 +167,5 @@ CREATE POLICY "Users can insert own profile"
 CREATE POLICY "Owners can delete profiles"
   ON public.profiles FOR DELETE TO authenticated
   USING (
-    public.get_user_role() = 'owner'
+    lower(public.get_user_role()) = 'owner'
   );
