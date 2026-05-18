@@ -11,7 +11,7 @@ export default function Sidebar() {
     { name: 'Tasks', href: '/tasks', icon: 'assignment', colorClass: 'warning' },
     { name: 'Bookings', href: '/bookings', icon: 'calendar_today', colorClass: 'success' },
     { name: 'Agencies', href: '/agencies', icon: 'business', colorClass: 'secondary' },
-    { name: 'Team', href: '/team', icon: 'groups', colorClass: 'accent' },
+    { name: 'Team', href: '/settings/team', icon: 'groups', colorClass: 'accent' },
     { name: 'Insights', href: '/insights', icon: 'insights', colorClass: 'primary' },
   ];
 
