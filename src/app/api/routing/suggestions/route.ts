@@ -20,11 +20,10 @@ export async function GET(request: NextRequest) {
     .eq('id', agency_id)
     .single();
 
-  // Fetch all photographers
+  // Fetch all photographers (removed role='photographer' filter so admins/testers show up)
   const { data: photographers } = await supabase
     .from('profiles')
-    .select('*')
-    .eq('role', 'photographer');
+    .select('*');
 
   if (!photographers || photographers.length === 0) {
     return NextResponse.json({ suggestions: [] });
