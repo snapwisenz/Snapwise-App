@@ -325,16 +325,16 @@ export default function SettingsTeamPage() {
                       onChange={(e) => setInviteRole(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer"
                     >
+                    <option value="owner">Account Owner</option>
                       <option value="admin">Admin</option>
-                      <option value="dispatcher">Dispatcher</option>
                       <option value="photographer">Photographer</option>
                     </select>
                     <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
                   </div>
                   <p className="text-[10px] text-slate-400 mt-1">
                     {inviteRole === 'photographer' && "Photographers will be asked for their service zones and base address."}
-                    {inviteRole === 'dispatcher' && "Dispatchers manage scheduling but don't travel."}
                     {inviteRole === 'admin' && "Admins have full access to billing and agency settings."}
+                    {inviteRole === 'owner' && "Account Owners have top-level system access."}
                   </p>
                 </div>
               </div>
@@ -390,8 +390,8 @@ export default function SettingsTeamPage() {
                     onChange={(e) => setEditRole(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer"
                   >
+                    <option value="owner">Account Owner</option>
                     <option value="admin">Admin</option>
-                    <option value="dispatcher">Dispatcher</option>
                     <option value="photographer">Photographer</option>
                   </select>
                   <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
