@@ -36,20 +36,22 @@ export default function ProfileSettingsPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('');
+  const [isPhotographer, setIsPhotographer] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        const { data: profile } = await supabase.from('profiles').select('first_name, last_name, home_address, role, avatar_url').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('first_name, last_name, home_address, role, avatar_url, is_photographer').eq('id', user.id).single();
         if (profile) {
-          setUserRole(profile.role || 'photographer');
+          setUserRole(profile.role || 'staff');
+          setIsPhotographer(profile.is_photographer || false);
           setFormData({
             first_name: profile.first_name || '',
             last_name: profile.last_name || '',
             home_address: profile.home_address || '',
-            role: profile.role || 'photographer',
+            role: profile.role || 'staff',
             avatar_url: profile.avatar_url || ''
           });
         }
@@ -114,7 +116,8 @@ export default function ProfileSettingsPage() {
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          home_address: formData.home_address,
+          is_photographer: isPhotographer,
+          home_address: isPhotographer ? formData.home_address : null,
           avatar_url: formData.avatar_url
         })
         .eq('id', userId);
@@ -281,11 +284,44 @@ export default function ProfileSettingsPage() {
                 >
                   <option value="owner">Owner</option>
                   <option value="admin">Admin</option>
-                  <option value="photographer">Photographer</option>
+                  <option value="staff">Staff</option>
                 </select>
                 <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">lock</span>
               </div>
               <p className="text-xs text-slate-400">Your role is managed by the Account Owner via Team Settings.</p>
+            </div>
+
+            {/* Photographer job function toggle */}
+            <div className="pt-2">
+              <label
+                htmlFor="is_photographer_profile"
+                className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  isPhotographer
+                    ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                  isPhotographer ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                }`}>
+                  {isPhotographer && <span className="material-icons text-white text-[16px]">check</span>}
+                </div>
+                <input
+                  type="checkbox"
+                  id="is_photographer_profile"
+                  checked={isPhotographer}
+                  onChange={(e) => {
+                    setIsPhotographer(e.target.checked);
+                    if (!e.target.checked) setFormData(prev => ({ ...prev, home_address: '' }));
+                  }}
+                  className="sr-only"
+                />
+                <div>
+                  <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">I am a photographer</p>
+                  <p className="text-xs text-slate-500 mt-0.5">I need a route schedule and territory assignments.</p>
+                </div>
+                <span className={`material-icons-outlined ml-auto text-xl ${isPhotographer ? 'text-primary' : 'text-slate-400'}`}>camera_alt</span>
+              </label>
             </div>
 
             <div className="space-y-2">

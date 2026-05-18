@@ -1,11 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Pages photographers ARE allowed to access
-const PHOTOGRAPHER_ALLOWED = ['/bookings', '/tasks', '/settings/profile', '/onboarding', '/api']
+// Pages staff (non-admin) are allowed to access
+const STAFF_ALLOWED = ['/bookings', '/tasks', '/settings/profile', '/onboarding', '/api']
 
-function isPhotographerAllowed(pathname: string): boolean {
-  return PHOTOGRAPHER_ALLOWED.some(
+function isStaffAllowed(pathname: string): boolean {
+  return STAFF_ALLOWED.some(
     (allowed) => pathname === allowed || pathname.startsWith(`${allowed}/`)
   )
 }
@@ -64,9 +64,9 @@ export async function updateSession(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    const role = profile?.role || 'photographer'
+    const role = profile?.role || 'staff'
 
-    if (role === 'photographer' && !isPhotographerAllowed(request.nextUrl.pathname)) {
+    if (role === 'staff' && !isStaffAllowed(request.nextUrl.pathname)) {
       const url = request.nextUrl.clone()
       url.pathname = '/bookings'
       return NextResponse.redirect(url)

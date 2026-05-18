@@ -12,7 +12,7 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const isManagerRole = role === 'owner' || role === 'admin';
 
-  // All nav items — some are restricted to owner/admin
+  // All nav items — manager-only items are hidden from staff
   const allNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard', colorClass: 'primary', managerOnly: true },
     { name: 'Tasks', href: '/tasks', icon: 'assignment', colorClass: 'warning', managerOnly: false },

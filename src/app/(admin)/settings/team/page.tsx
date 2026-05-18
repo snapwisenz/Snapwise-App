@@ -14,7 +14,7 @@ export default function SettingsTeamPage() {
   // Invite Modal State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('photographer');
+  const [inviteRole, setInviteRole] = useState('staff');
   const [isInviting, setIsInviting] = useState(false);
 
   // Edit Modal State
@@ -23,6 +23,7 @@ export default function SettingsTeamPage() {
   
   // Edit Form State
   const [editRole, setEditRole] = useState('');
+  const [editIsPhotographer, setEditIsPhotographer] = useState(false);
   const [baseAddress, setBaseAddress] = useState('');
   const [serviceRegions, setServiceRegions] = useState<string[]>([]);
   const [newRegion, setNewRegion] = useState('');
@@ -72,7 +73,7 @@ export default function SettingsTeamPage() {
 
   // --- Edit Profile Logic ---
   useEffect(() => {
-    if (selectedProfile && isLoaded && window.google && addressInputRef.current && editRole === 'photographer') {
+    if (selectedProfile && isLoaded && window.google && addressInputRef.current && editIsPhotographer) {
       if (addressInputRef.current.dataset.hasAutocomplete) return;
       addressInputRef.current.dataset.hasAutocomplete = 'true';
       
@@ -87,11 +88,12 @@ export default function SettingsTeamPage() {
         setBaseAddress(newAddress);
       });
     }
-  }, [selectedProfile, isLoaded, editRole]);
+  }, [selectedProfile, isLoaded, editIsPhotographer]);
 
   const openEditModal = (profile: any) => {
     setSelectedProfile(profile);
-    setEditRole(profile.role || 'photographer');
+    setEditRole(profile.role || 'staff');
+    setEditIsPhotographer(profile.is_photographer || false);
     setBaseAddress(profile.base_address || profile.home_address || '');
     setServiceRegions(Array.isArray(profile.service_regions) ? profile.service_regions : []);
     setNewRegion('');
@@ -119,11 +121,11 @@ export default function SettingsTeamPage() {
     if (!selectedProfile) return;
     setIsSaving(true);
     try {
-      const isPhotographer = editRole === 'photographer';
       const updates = {
         role: editRole,
-        base_address: isPhotographer ? baseAddress : null,
-        service_regions: isPhotographer ? serviceRegions : null,
+        is_photographer: editIsPhotographer,
+        base_address: editIsPhotographer ? baseAddress : null,
+        service_regions: editIsPhotographer ? serviceRegions : null,
       };
 
       const { error } = await supabase
@@ -131,14 +133,14 @@ export default function SettingsTeamPage() {
         .update(updates)
         .eq('id', selectedProfile.id);
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       alert('Profile updated successfully!');
       closeEditModal();
       fetchProfiles();
     } catch (err) {
       console.error('Error saving profile:', err);
-      alert('Failed to update profile.');
+      alert(`Failed to update profile: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving(false);
     }
@@ -183,7 +185,7 @@ export default function SettingsTeamPage() {
       alert(`Invitation sent to ${inviteEmail} for role: ${inviteRole.toUpperCase()}`);
       setIsInviteOpen(false);
       setInviteEmail('');
-      setInviteRole('photographer');
+      setInviteRole('staff');
       fetchProfiles(); // Refresh the list to show the pending profile
     } catch (err: any) {
       console.error(err);
@@ -238,7 +240,7 @@ export default function SettingsTeamPage() {
               ) : (
                 profiles.map((p) => {
                   const roleName = p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1) : 'Unassigned';
-                  const isPhoto = p.role === 'photographer';
+                  const isPhoto = p.is_photographer === true;
                   
                   return (
                     <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
@@ -344,7 +346,7 @@ export default function SettingsTeamPage() {
                     {[
                       { value: 'owner', label: 'Owner', desc: 'Full system control and billing access.', icon: 'shield' },
                       { value: 'admin', label: 'Admin', desc: 'Manage bookings, team, and agency settings.', icon: 'admin_panel_settings' },
-                      { value: 'photographer', label: 'Photographer', desc: 'View schedule, sync calendar, manage territories.', icon: 'camera_alt' },
+                      { value: 'staff', label: 'Staff', desc: 'Access to schedule and assigned bookings.', icon: 'person' },
                     ].map(opt => {
                       const isDisabled = opt.value === 'owner' && currentUserRole !== 'owner';
                       return (
@@ -439,7 +441,7 @@ export default function SettingsTeamPage() {
                     {[
                       { value: 'owner', label: 'Owner', desc: 'Full system control.', icon: 'shield' },
                       { value: 'admin', label: 'Admin', desc: 'Manage bookings and team.', icon: 'admin_panel_settings' },
-                      { value: 'photographer', label: 'Photographer', desc: 'Schedule, calendar, territories.', icon: 'camera_alt' },
+                      { value: 'staff', label: 'Staff', desc: 'Access to schedule and bookings.', icon: 'person' },
                     ].map(opt => {
                       const isDisabled = opt.value === 'owner' && currentUserRole !== 'owner';
                       return (
@@ -477,8 +479,44 @@ export default function SettingsTeamPage() {
                 )}
               </div>
 
-              {/* Conditional Photographer Settings */}
-              {editRole === 'photographer' && (
+              {/* Photographer Job Function Toggle */}
+              <div className="pt-2">
+                <label
+                  htmlFor="edit_is_photographer"
+                  className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    editIsPhotographer
+                      ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                    editIsPhotographer ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                  }`}>
+                    {editIsPhotographer && <span className="material-icons text-white text-[16px]">check</span>}
+                  </div>
+                  <input
+                    type="checkbox"
+                    id="edit_is_photographer"
+                    checked={editIsPhotographer}
+                    onChange={(e) => {
+                      setEditIsPhotographer(e.target.checked);
+                      if (!e.target.checked) {
+                        setBaseAddress('');
+                        setServiceRegions([]);
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                  <div>
+                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Is a photographer</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Enables route scheduling and territory assignments.</p>
+                  </div>
+                  <span className={`material-icons-outlined ml-auto text-xl ${editIsPhotographer ? 'text-primary' : 'text-slate-400'}`}>camera_alt</span>
+                </label>
+              </div>
+
+              {/* Conditional Photographer Logistics */}
+              {editIsPhotographer && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                   <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500 pt-4 border-t border-slate-100 dark:border-slate-800">Photographer Logistics</h4>
                   
