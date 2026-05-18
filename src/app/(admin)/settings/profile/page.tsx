@@ -30,24 +30,26 @@ export default function ProfileSettingsPage() {
     first_name: '',
     last_name: '',
     home_address: '',
-    role_title: '',
+    role: '',
     avatar_url: ''
   });
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('first_name, last_name, home_address, role, avatar_url').eq('id', user.id).single();
         if (profile) {
+          setUserRole(profile.role || 'photographer');
           setFormData({
             first_name: profile.first_name || '',
             last_name: profile.last_name || '',
             home_address: profile.home_address || '',
-            role_title: profile.role_title || '',
+            role: profile.role || 'photographer',
             avatar_url: profile.avatar_url || ''
           });
         }
@@ -113,7 +115,6 @@ export default function ProfileSettingsPage() {
           first_name: formData.first_name,
           last_name: formData.last_name,
           home_address: formData.home_address,
-          role_title: formData.role_title,
           avatar_url: formData.avatar_url
         })
         .eq('id', userId);
@@ -269,15 +270,22 @@ export default function ProfileSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="role_title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role Title</label>
-              <input
-                type="text"
-                id="role_title"
-                name="role_title"
-                value={formData.role_title}
-                onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
+              <label htmlFor="role" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">System Role</label>
+              <div className="relative">
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  disabled
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 focus:outline-none cursor-not-allowed appearance-none font-semibold"
+                >
+                  <option value="owner">Owner</option>
+                  <option value="admin">Admin</option>
+                  <option value="photographer">Photographer</option>
+                </select>
+                <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">lock</span>
+              </div>
+              <p className="text-xs text-slate-400">Your role is managed by the Account Owner via Team Settings.</p>
             </div>
 
             <div className="space-y-2">

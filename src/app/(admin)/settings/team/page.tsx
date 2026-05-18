@@ -9,6 +9,7 @@ const libraries: any[] = ['places'];
 export default function SettingsTeamPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
   
   // Invite Modal State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -36,7 +37,20 @@ export default function SettingsTeamPage() {
   });
 
   useEffect(() => {
-    fetchProfiles();
+    async function init() {
+      // Fetch current user's role for permission gating
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (myProfile) setCurrentUserRole(myProfile.role || '');
+      }
+      fetchProfiles();
+    }
+    init();
   }, [supabase]);
 
   async function fetchProfiles() {
@@ -184,7 +198,7 @@ export default function SettingsTeamPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Team Management</h1>
-          <p className="text-base text-slate-500 dark:text-slate-400">Manage Admins, Dispatchers, and Photographers.</p>
+          <p className="text-base text-slate-500 dark:text-slate-400">Manage Owners, Admins, and Photographers.</p>
         </div>
         <button 
           onClick={() => setIsInviteOpen(true)}
@@ -248,7 +262,7 @@ export default function SettingsTeamPage() {
                       <td className="px-6 py-4 text-sm text-slate-500">{p.email || '-'}</td>
                       <td className="px-6 py-4">
                         {!isPhoto ? (
-                          <span className="text-slate-400 font-medium">—</span>
+                          <span className="text-slate-400 text-xs font-medium">N/A</span>
                         ) : (
                           <div className="flex flex-wrap gap-1">
                             {Array.isArray(p.service_regions) && p.service_regions.length > 0 ? (
@@ -264,10 +278,17 @@ export default function SettingsTeamPage() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase bg-success/20 text-success-700 dark:text-success">
-                          <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
-                          Active
-                        </span>
+                        {(!p.first_name || !p.last_name) ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            Pending
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase bg-success/20 text-success-700 dark:text-success">
+                            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+                            Active
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button 
@@ -317,25 +338,47 @@ export default function SettingsTeamPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Assigned Role</label>
-                  <div className="relative">
-                    <select
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer"
-                    >
-                    <option value="owner">Account Owner</option>
-                      <option value="admin">Admin</option>
-                      <option value="photographer">Photographer</option>
-                    </select>
-                    <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                <div className="space-y-3">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Access Level</label>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'owner', label: 'Owner', desc: 'Full system control and billing access.', icon: 'shield' },
+                      { value: 'admin', label: 'Admin', desc: 'Manage bookings, team, and agency settings.', icon: 'admin_panel_settings' },
+                      { value: 'photographer', label: 'Photographer', desc: 'View schedule, sync calendar, manage territories.', icon: 'camera_alt' },
+                    ].map(opt => {
+                      const isDisabled = opt.value === 'owner' && currentUserRole !== 'owner';
+                      return (
+                        <label
+                          key={opt.value}
+                          className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                            inviteRole === opt.value
+                              ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-sm'
+                              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                          } ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="inviteRole"
+                            value={opt.value}
+                            checked={inviteRole === opt.value}
+                            onChange={(e) => setInviteRole(e.target.value)}
+                            disabled={isDisabled}
+                            className="sr-only"
+                          />
+                          <span className={`material-icons-outlined text-xl ${inviteRole === opt.value ? 'text-primary' : 'text-slate-400'}`}>{opt.icon}</span>
+                          <div className="flex-1">
+                            <p className="font-bold text-sm text-slate-900 dark:text-white">{opt.label}</p>
+                            <p className="text-[11px] text-slate-500">{opt.desc}</p>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            inviteRole === opt.value ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                          }`}>
+                            {inviteRole === opt.value && <span className="w-2 h-2 rounded-full bg-white"></span>}
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    {inviteRole === 'photographer' && "Photographers will be asked for their service zones and base address."}
-                    {inviteRole === 'admin' && "Admins have full access to billing and agency settings."}
-                    {inviteRole === 'owner' && "Account Owners have top-level system access."}
-                  </p>
                 </div>
               </div>
 
@@ -381,21 +424,57 @@ export default function SettingsTeamPage() {
                 <p className="text-sm text-slate-500">{selectedProfile.email}</p>
               </div>
 
-              {/* Roles & Permissions */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">System Role</h4>
-                <div className="relative">
-                  <select
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="owner">Account Owner</option>
-                    <option value="admin">Admin</option>
-                    <option value="photographer">Photographer</option>
-                  </select>
-                  <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-                </div>
+                {selectedProfile.role === 'owner' && currentUserRole !== 'owner' ? (
+                  <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span className="material-icons-outlined text-amber-500">shield</span>
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-white">Account Owner</p>
+                      <p className="text-[11px] text-slate-500">Owner role cannot be changed.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {[
+                      { value: 'owner', label: 'Owner', desc: 'Full system control.', icon: 'shield' },
+                      { value: 'admin', label: 'Admin', desc: 'Manage bookings and team.', icon: 'admin_panel_settings' },
+                      { value: 'photographer', label: 'Photographer', desc: 'Schedule, calendar, territories.', icon: 'camera_alt' },
+                    ].map(opt => {
+                      const isDisabled = opt.value === 'owner' && currentUserRole !== 'owner';
+                      return (
+                        <label
+                          key={opt.value}
+                          className={`flex items-center gap-4 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                            editRole === opt.value
+                              ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                          } ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="editRole"
+                            value={opt.value}
+                            checked={editRole === opt.value}
+                            onChange={(e) => setEditRole(e.target.value)}
+                            disabled={isDisabled}
+                            className="sr-only"
+                          />
+                          <span className={`material-icons-outlined ${editRole === opt.value ? 'text-primary' : 'text-slate-400'}`}>{opt.icon}</span>
+                          <div className="flex-1">
+                            <p className="font-bold text-sm text-slate-900 dark:text-white">{opt.label}</p>
+                            <p className="text-[10px] text-slate-500">{opt.desc}</p>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            editRole === opt.value ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                          }`}>
+                            {editRole === opt.value && <span className="w-2 h-2 rounded-full bg-white"></span>}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Conditional Photographer Settings */}

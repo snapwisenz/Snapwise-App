@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('first_name, last_name, role, avatar_url')
     .eq('id', user.id)
     .single();
 
@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   }
 
   const fullName = `${profile.first_name} ${profile.last_name}`;
-  const roleTitle = profile.role_title || 'User';
+  const roleTitle = profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : 'User';
   const avatarUrl = profile.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=random';
 
   return (

@@ -1,21 +1,18 @@
 -- ============================================================
--- STEP 1: Update the role check constraint on profiles
--- to include all new role types: owner, admin, dispatcher, photographer
+-- Snapwise 3-Tier RBAC Migration
+-- Roles: owner | admin | photographer
 -- ============================================================
-ALTER TABLE public.profiles
-  DROP CONSTRAINT IF EXISTS profiles_role_check;
 
+-- STEP 1: Migrate any existing 'dispatcher' roles to 'admin'
+UPDATE public.profiles SET role = 'admin' WHERE role = 'dispatcher';
+
+-- STEP 2: Update the role check constraint
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE public.profiles
   ADD CONSTRAINT profiles_role_check
   CHECK (role IN ('owner', 'admin', 'photographer'));
 
-
--- ============================================================
--- STEP 2: Also add service_regions and base_address columns
--- if they don't already exist (needed for the Team Management page).
--- Also make tenancy_id nullable so the trigger INSERT doesn't fail
--- (profiles created via trigger won't have a tenancy yet).
--- ============================================================
+-- STEP 3: Add photographer logistics columns if missing
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS service_regions TEXT[] DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS base_address TEXT;
@@ -23,68 +20,70 @@ ALTER TABLE public.profiles
 ALTER TABLE public.profiles
   ALTER COLUMN tenancy_id DROP NOT NULL;
 
-
--- ============================================================
--- STEP 3: Create the trigger function
--- This fires every time a new user signs up via Supabase Auth.
--- It reads metadata from the signup (full_name, first_name, last_name, email)
--- and creates an initial profile row with role = 'owner'.
--- ============================================================
+-- STEP 4: Create the trigger function
+-- First user → 'owner'. Subsequent users → role from metadata or 'photographer'.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  _role TEXT;
+  _existing_count INT;
 BEGIN
+  SELECT COUNT(*) INTO _existing_count FROM public.profiles;
+
+  IF _existing_count = 0 THEN
+    _role := 'owner';
+  ELSE
+    _role := COALESCE(NEW.raw_user_meta_data->>'role', 'photographer');
+    IF _role NOT IN ('owner', 'admin', 'photographer') THEN
+      _role := 'photographer';
+    END IF;
+  END IF;
+
   INSERT INTO public.profiles (
-    id,
-    email,
-    full_name,
-    first_name,
-    last_name,
-    role,
-    created_at
-  )
-  VALUES (
+    id, email, full_name, first_name, last_name, role
+  ) VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'first_name', split_part(NEW.email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
-    'owner',
-    NOW()
+    _role
   )
-  ON CONFLICT (id) DO NOTHING; -- Safety: don't overwrite if profile already exists
+  ON CONFLICT (id) DO NOTHING;
+
   RETURN NEW;
 END;
 $$;
 
-
--- ============================================================
--- STEP 4: Attach the trigger to auth.users
--- Drop first in case it exists from a previous attempt, then recreate.
--- ============================================================
+-- STEP 5: Attach the trigger
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
-
--- ============================================================
--- STEP 5: Backfill — create a profile for ANY existing auth users
--- who don't already have one (e.g. yourself, since you signed up before this trigger existed).
--- ============================================================
-INSERT INTO public.profiles (id, email, full_name, first_name, role, created_at)
-SELECT
-  u.id,
-  u.email,
+-- STEP 6: Backfill – first existing user without a profile gets 'owner'
+INSERT INTO public.profiles (id, email, full_name, first_name, role)
+SELECT u.id, u.email,
   COALESCE(u.raw_user_meta_data->>'full_name', split_part(u.email, '@', 1)),
   COALESCE(u.raw_user_meta_data->>'first_name', split_part(u.email, '@', 1)),
-  'owner',
-  NOW()
+  'owner'
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL
+ORDER BY u.created_at ASC
+LIMIT 1;
+
+-- Remaining users without profiles get 'photographer'
+INSERT INTO public.profiles (id, email, full_name, first_name, role)
+SELECT u.id, u.email,
+  COALESCE(u.raw_user_meta_data->>'full_name', split_part(u.email, '@', 1)),
+  COALESCE(u.raw_user_meta_data->>'first_name', split_part(u.email, '@', 1)),
+  'photographer'
 FROM auth.users u
 LEFT JOIN public.profiles p ON p.id = u.id
 WHERE p.id IS NULL;
