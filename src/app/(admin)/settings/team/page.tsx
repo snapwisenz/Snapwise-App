@@ -157,16 +157,23 @@ export default function SettingsTeamPage() {
     e.preventDefault();
     setIsInviting(true);
     try {
-      // In Phase 2 this will call an API route that uses the Supabase Admin API to send the invite
-      // For now, we will just alert to demonstrate the UI flow
-      await new Promise(resolve => setTimeout(resolve, 800)); // simulate network
+      const res = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Failed to send invite');
+      
       alert(`Invitation sent to ${inviteEmail} for role: ${inviteRole.toUpperCase()}`);
       setIsInviteOpen(false);
       setInviteEmail('');
       setInviteRole('photographer');
-    } catch (err) {
+      fetchProfiles(); // Refresh the list to show the pending profile
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to send invite.');
+      alert(`Failed to send invite: ${err.message}`);
     } finally {
       setIsInviting(false);
     }
