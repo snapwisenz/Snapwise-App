@@ -113,6 +113,21 @@ DROP POLICY IF EXISTS "Service role can insert profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Owners can delete profiles" ON public.profiles;
 
+-- Create a SECURITY DEFINER helper function to bypass RLS and avoid infinite recursion
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  _role text;
+BEGIN
+  SELECT role INTO _role FROM public.profiles WHERE id = auth.uid();
+  RETURN _role;
+END;
+$$;
+
 -- 1. Everyone can read their OWN profile
 CREATE POLICY "Users can view own profile"
   ON public.profiles FOR SELECT TO authenticated
@@ -122,10 +137,7 @@ CREATE POLICY "Users can view own profile"
 CREATE POLICY "Owners and admins can view all profiles"
   ON public.profiles FOR SELECT TO authenticated
   USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles AS p
-      WHERE p.id = auth.uid() AND p.role IN ('owner', 'admin')
-    )
+    public.get_user_role() IN ('owner', 'admin')
   );
 
 -- 3. Users can update their own profile
@@ -138,10 +150,7 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Owners and admins can update all profiles"
   ON public.profiles FOR UPDATE TO authenticated
   USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles AS p
-      WHERE p.id = auth.uid() AND p.role IN ('owner', 'admin')
-    )
+    public.get_user_role() IN ('owner', 'admin')
   );
 
 -- 5. Service role can insert (trigger)
@@ -158,8 +167,5 @@ CREATE POLICY "Users can insert own profile"
 CREATE POLICY "Owners can delete profiles"
   ON public.profiles FOR DELETE TO authenticated
   USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles AS p
-      WHERE p.id = auth.uid() AND p.role = 'owner'
-    )
+    public.get_user_role() = 'owner'
   );
