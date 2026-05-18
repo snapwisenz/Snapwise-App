@@ -1,45 +1,48 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Script from 'next/script';
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const supabase = createClient();
   const addressInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPhotographer, setIsPhotographer] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     home_address: '',
-    role_title: ''
   });
 
   useEffect(() => {
-    // Optionally fetch existing profile data to pre-fill if any exist
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setFormData(prev => ({ ...prev, email: user.email || '' }));
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, home_address, role')
+          .eq('id', user.id)
+          .single();
         if (profile) {
           setFormData({
             first_name: profile.first_name || '',
             last_name: profile.last_name || '',
             home_address: profile.home_address || '',
-            role_title: profile.role_title || ''
           });
+          // Pre-check the photographer toggle if their role is already photographer
+          if (profile.role === 'photographer' && profile.home_address) {
+            setIsPhotographer(true);
+          }
         }
       }
     }
     loadProfile();
   }, [supabase]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -57,8 +60,7 @@ export default function OnboardingPage() {
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
-          home_address: formData.home_address,
-          role_title: formData.role_title,
+          home_address: isPhotographer ? formData.home_address : null,
         })
         .eq('id', user.id)
         .select();
@@ -70,9 +72,10 @@ export default function OnboardingPage() {
 
       // Force a full page reload to clear Next.js client-side router caches
       window.location.href = '/dashboard';
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred while saving your profile.';
       console.error(err);
-      setError(err.message || 'An error occurred while saving your profile.');
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,7 @@ export default function OnboardingPage() {
 
   const initAutocomplete = () => {
     if (!addressInputRef.current || !window.google) return;
-    
+
     const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current, {
       fields: ['formatted_address', 'name'],
       componentRestrictions: { country: 'nz' },
@@ -93,22 +96,32 @@ export default function OnboardingPage() {
     });
   };
 
+  // Re-init autocomplete when the photographer toggle reveals the field
+  useEffect(() => {
+    if (isPhotographer && window.google && addressInputRef.current) {
+      // Small delay to let the DOM render the input
+      const timer = setTimeout(() => initAutocomplete(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isPhotographer]);
+
   return (
     <>
-      <Script 
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`} 
-        strategy="lazyOnload" 
-        onLoad={initAutocomplete} 
+      <Script
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+        strategy="lazyOnload"
+        onLoad={initAutocomplete}
       />
       <main className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
       <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm w-full max-w-2xl border border-slate-200 dark:border-slate-700">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Welcome to Snapwise!</h1>
-          <p className="text-slate-500 dark:text-slate-400">Let's get your profile set up so we can personalize your experience.</p>
+          <p className="text-slate-500 dark:text-slate-400">Let&apos;s get your profile set up so we can personalize your experience.</p>
         </div>
 
         {error && (
-          <div className="bg-error/10 text-error p-4 rounded-lg mb-6 text-sm">
+          <div className="bg-error/10 text-error p-4 rounded-lg mb-6 text-sm flex items-center gap-2">
+            <span className="material-icons text-[18px]">error_outline</span>
             {error}
           </div>
         )}
@@ -143,33 +156,62 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="home_address" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Home Base Address</label>
-            <p className="text-xs text-slate-500 mb-1">Used to calculate your driving distances and routes.</p>
-            <input
-              ref={addressInputRef}
-              type="text"
-              id="home_address"
-              name="home_address"
-              value={formData.home_address}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="e.g. 123 Main St, Auckland"
-            />
+          {/* Photographer Toggle */}
+          <div className="pt-2">
+            <label
+              htmlFor="is_photographer"
+              className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                isPhotographer
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                isPhotographer
+                  ? 'border-primary bg-primary'
+                  : 'border-slate-300 dark:border-slate-600'
+              }`}>
+                {isPhotographer && (
+                  <span className="material-icons text-white text-[16px]">check</span>
+                )}
+              </div>
+              <input
+                type="checkbox"
+                id="is_photographer"
+                checked={isPhotographer}
+                onChange={(e) => {
+                  setIsPhotographer(e.target.checked);
+                  if (!e.target.checked) {
+                    setFormData(prev => ({ ...prev, home_address: '' }));
+                  }
+                }}
+                className="sr-only"
+              />
+              <div>
+                <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">I am a photographer</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">I need a route schedule and territory assignments.</p>
+              </div>
+              <span className={`material-icons-outlined ml-auto text-xl ${isPhotographer ? 'text-primary' : 'text-slate-400'}`}>camera_alt</span>
+            </label>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="role_title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role Title</label>
-            <input
-              type="text"
-              id="role_title"
-              name="role_title"
-              value={formData.role_title}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="e.g. Lead Photographer"
-            />
-          </div>
+          {/* Conditional Address Field */}
+          {isPhotographer && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label htmlFor="home_address" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Home Base Address</label>
+              <p className="text-xs text-slate-500 mb-1">Used to calculate your driving distances and routes.</p>
+              <input
+                ref={addressInputRef}
+                type="text"
+                id="home_address"
+                name="home_address"
+                value={formData.home_address}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                placeholder="e.g. 123 Main St, Auckland"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
