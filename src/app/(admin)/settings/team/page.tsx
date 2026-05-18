@@ -10,12 +10,18 @@ export default function SettingsTeamPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Modal State
+  // Invite Modal State
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('photographer');
+  const [isInviting, setIsInviting] = useState(false);
+
+  // Edit Modal State
   const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
   // Edit Form State
-  const [isPhotographer, setIsPhotographer] = useState(false);
+  const [editRole, setEditRole] = useState('');
   const [baseAddress, setBaseAddress] = useState('');
   const [serviceRegions, setServiceRegions] = useState<string[]>([]);
   const [newRegion, setNewRegion] = useState('');
@@ -50,8 +56,9 @@ export default function SettingsTeamPage() {
     }
   }
 
+  // --- Edit Profile Logic ---
   useEffect(() => {
-    if (selectedProfile && isLoaded && window.google && addressInputRef.current && isPhotographer) {
+    if (selectedProfile && isLoaded && window.google && addressInputRef.current && editRole === 'photographer') {
       if (addressInputRef.current.dataset.hasAutocomplete) return;
       addressInputRef.current.dataset.hasAutocomplete = 'true';
       
@@ -66,11 +73,11 @@ export default function SettingsTeamPage() {
         setBaseAddress(newAddress);
       });
     }
-  }, [selectedProfile, isLoaded, isPhotographer]);
+  }, [selectedProfile, isLoaded, editRole]);
 
   const openEditModal = (profile: any) => {
     setSelectedProfile(profile);
-    setIsPhotographer(profile.role === 'photographer');
+    setEditRole(profile.role || 'photographer');
     setBaseAddress(profile.base_address || profile.home_address || '');
     setServiceRegions(Array.isArray(profile.service_regions) ? profile.service_regions : []);
     setNewRegion('');
@@ -98,10 +105,11 @@ export default function SettingsTeamPage() {
     if (!selectedProfile) return;
     setIsSaving(true);
     try {
+      const isPhotographer = editRole === 'photographer';
       const updates = {
-        role: isPhotographer ? 'photographer' : (selectedProfile.role === 'photographer' ? null : selectedProfile.role),
-        base_address: isPhotographer ? baseAddress : selectedProfile.base_address,
-        service_regions: isPhotographer ? serviceRegions : selectedProfile.service_regions,
+        role: editRole,
+        base_address: isPhotographer ? baseAddress : null,
+        service_regions: isPhotographer ? serviceRegions : null,
       };
 
       const { error } = await supabase
@@ -122,13 +130,40 @@ export default function SettingsTeamPage() {
     }
   };
 
+  // --- Invite Logic ---
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsInviting(true);
+    try {
+      // In Phase 2 this will call an API route that uses the Supabase Admin API to send the invite
+      // For now, we will just alert to demonstrate the UI flow
+      await new Promise(resolve => setTimeout(resolve, 800)); // simulate network
+      alert(`Invitation sent to ${inviteEmail} for role: ${inviteRole.toUpperCase()}`);
+      setIsInviteOpen(false);
+      setInviteEmail('');
+      setInviteRole('photographer');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send invite.');
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-6">
+    <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-6 bg-slate-50 dark:bg-slate-950 min-h-full relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Staff Management</h1>
-          <p className="text-base text-slate-500 dark:text-slate-400">Manage your team members, permissions, and service zones.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Team Management</h1>
+          <p className="text-base text-slate-500 dark:text-slate-400">Manage Admins, Dispatchers, and Photographers.</p>
         </div>
+        <button 
+          onClick={() => setIsInviteOpen(true)}
+          className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all"
+        >
+          <span className="material-icons-outlined">person_add</span>
+          Invite Team Member
+        </button>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -137,68 +172,166 @@ export default function SettingsTeamPage() {
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                 <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Name</th>
-                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Email</th>
                 <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Role</th>
-                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Nylas Sync</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Contact</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Service Areas</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest">Status</th>
+                <th className="px-6 py-4 font-bold text-slate-500 uppercase text-[11px] tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">
-                    Loading staff...
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">
+                    Loading team members...
                   </td>
                 </tr>
               ) : profiles.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic">
-                    No users found.
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">
+                    No team members found.
                   </td>
                 </tr>
               ) : (
-                profiles.map((p) => (
-                  <tr 
-                    key={p.id} 
-                    onClick={() => openEditModal(p)}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                          {p.first_name ? p.first_name[0] : (p.full_name ? p.full_name[0] : '?')}
+                profiles.map((p) => {
+                  const roleName = p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1) : 'Unassigned';
+                  const isPhoto = p.role === 'photographer';
+                  
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                            {p.first_name ? p.first_name[0] : (p.full_name ? p.full_name[0] : '?')}
+                          </div>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">
+                            {p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : (p.full_name || 'Unnamed')}
+                          </div>
                         </div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
-                          {p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : (p.full_name || 'Unnamed User')}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{p.email || 'No email provided'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase ${
-                        p.role === 'photographer' ? 'bg-primary/20 text-primary-700 dark:text-primary-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                      }`}>
-                        {p.role || 'Unassigned'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {p.nylas_grant_id ? (
-                        <span className="inline-flex items-center gap-1.5 text-success text-xs font-bold">
-                          <span className="material-icons-outlined text-[14px]">check_circle</span> Connected
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase ${
+                          isPhoto ? 'bg-primary/10 text-primary-700 dark:text-primary-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                        }`}>
+                          {roleName}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-slate-400 text-xs font-bold">
-                          <span className="material-icons-outlined text-[14px]">cancel</span> Not Connected
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{p.email || '-'}</td>
+                      <td className="px-6 py-4">
+                        {!isPhoto ? (
+                          <span className="text-slate-400 font-medium">—</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {Array.isArray(p.service_regions) && p.service_regions.length > 0 ? (
+                              p.service_regions.map((r: string) => (
+                                <span key={r} className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                  {r.trim()}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs italic text-slate-400">None Set</span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase bg-success/20 text-success-700 dark:text-success">
+                          <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+                          Active
                         </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={() => openEditModal(p)}
+                          className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider bg-primary/5 hover:bg-primary/10 px-3 py-2 rounded-lg"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* --- Invite Modal --- */}
+      {isInviteOpen && (
+        <div className="fixed inset-0 z-[60] overflow-hidden flex justify-end">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsInviteOpen(false)}></div>
+          <div className="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col relative animate-in slide-in-from-right duration-300">
+            <div className="px-6 py-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Invite Team Member</h2>
+              <button onClick={() => setIsInviteOpen(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleInviteSubmit} className="flex-1 overflow-y-auto flex flex-col">
+              <div className="p-6 space-y-6 flex-1">
+                <div className="bg-primary/10 p-4 rounded-xl flex gap-3 text-sm text-primary-700 dark:text-primary-300">
+                  <span className="material-icons-outlined text-primary">info</span>
+                  <p>When the user accepts this invite, their onboarding flow will be customized based on the role you select below.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="team@example.com"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Assigned Role</label>
+                  <div className="relative">
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="dispatcher">Dispatcher</option>
+                      <option value="photographer">Photographer</option>
+                    </select>
+                    <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {inviteRole === 'photographer' && "Photographers will be asked for their service zones and base address."}
+                    {inviteRole === 'dispatcher' && "Dispatchers manage scheduling but don't travel."}
+                    {inviteRole === 'admin' && "Admins have full access to billing and agency settings."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsInviteOpen(false)}
+                  className="flex-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isInviting || !inviteEmail}
+                  className="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:brightness-110 disabled:opacity-50 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  {isInviting ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <>Send Invite <span className="material-icons-outlined text-sm">send</span></>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- Edit Profile Modal --- */}
       {selectedProfile && (
         <div className="fixed inset-0 z-[60] overflow-hidden flex justify-end">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeEditModal}></div>
@@ -221,24 +354,23 @@ export default function SettingsTeamPage() {
 
               {/* Roles & Permissions */}
               <div className="space-y-4">
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">Roles & Permissions</h4>
-                
-                <label className="flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all border-primary/20 bg-primary/5 hover:border-primary/40">
-                  <input 
-                    type="checkbox" 
-                    checked={isPhotographer}
-                    onChange={(e) => setIsPhotographer(e.target.checked)}
-                    className="w-5 h-5 mt-0.5 text-primary border-slate-300 focus:ring-primary rounded" 
-                  />
-                  <div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-white block">Designate as Photographer</span>
-                    <span className="text-xs text-slate-500 block mt-1">Allows this user to be booked for jobs, manage service regions, and appear in AI routing suggestions.</span>
-                  </div>
-                </label>
+                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500">System Role</h4>
+                <div className="relative">
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="dispatcher">Dispatcher</option>
+                    <option value="photographer">Photographer</option>
+                  </select>
+                  <span className="material-icons-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
               </div>
 
               {/* Conditional Photographer Settings */}
-              {isPhotographer && (
+              {editRole === 'photographer' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                   <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500 pt-4 border-t border-slate-100 dark:border-slate-800">Photographer Logistics</h4>
                   
@@ -308,7 +440,7 @@ export default function SettingsTeamPage() {
               <button 
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center"
+                className="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-lg shadow-primary/30 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 {isSaving ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : 'Save Changes'}
               </button>
