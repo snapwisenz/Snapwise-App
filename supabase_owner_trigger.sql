@@ -39,8 +39,12 @@ AS $$
 DECLARE
   _role TEXT;
   _existing_count INT;
+  _email TEXT;
 BEGIN
   SELECT COUNT(*) INTO _existing_count FROM public.profiles;
+
+  -- Extract email safely
+  _email := COALESCE(NEW.email, NEW.raw_user_meta_data->>'email', '');
 
   IF _existing_count = 0 THEN
     _role := 'owner';
@@ -55,9 +59,9 @@ BEGIN
     id, email, full_name, first_name, last_name, role, is_photographer
   ) VALUES (
     NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
-    COALESCE(NEW.raw_user_meta_data->>'first_name', split_part(NEW.email, '@', 1)),
+    _email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(_email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'first_name', split_part(_email, '@', 1)),
     COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
     _role,
     COALESCE((NEW.raw_user_meta_data->>'is_photographer')::boolean, false)
