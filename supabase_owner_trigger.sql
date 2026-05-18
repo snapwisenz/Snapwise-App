@@ -87,3 +87,89 @@ SELECT u.id, u.email,
 FROM auth.users u
 LEFT JOIN public.profiles p ON p.id = u.id
 WHERE p.id IS NULL;
+
+
+-- ============================================================
+-- STEP 7: RLS Policies for profiles table
+-- Enable RLS and set up role-based read access.
+-- ============================================================
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Drop old policies if they exist (safe to re-run)
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Owners and admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Service role has full access" ON public.profiles;
+
+-- 1. Everyone can read their OWN profile
+CREATE POLICY "Users can view own profile"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING (auth.uid() = id);
+
+-- 2. Owners and Admins can read ALL profiles (for Team Management)
+CREATE POLICY "Owners and admins can view all profiles"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles AS p
+      WHERE p.id = auth.uid()
+      AND p.role IN ('owner', 'admin')
+    )
+  );
+
+-- 3. Users can update their own profile
+CREATE POLICY "Users can update own profile"
+  ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- 4. Owners and Admins can update ANY profile (role changes, etc.)
+DROP POLICY IF EXISTS "Owners and admins can update all profiles" ON public.profiles;
+CREATE POLICY "Owners and admins can update all profiles"
+  ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles AS p
+      WHERE p.id = auth.uid()
+      AND p.role IN ('owner', 'admin')
+    )
+  );
+
+-- 5. Allow inserts for the trigger function (runs as service role)
+--    and for the invite flow
+DROP POLICY IF EXISTS "Service role can insert profiles" ON public.profiles;
+CREATE POLICY "Service role can insert profiles"
+  ON public.profiles
+  FOR INSERT
+  TO service_role
+  WITH CHECK (true);
+
+-- 6. Allow authenticated users to insert their own profile (onboarding edge case)
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+-- 7. Allow Owners to delete profiles (remove team member)
+DROP POLICY IF EXISTS "Owners can delete profiles" ON public.profiles;
+CREATE POLICY "Owners can delete profiles"
+  ON public.profiles
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles AS p
+      WHERE p.id = auth.uid()
+      AND p.role = 'owner'
+    )
+  );

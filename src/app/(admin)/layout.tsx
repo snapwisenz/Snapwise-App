@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { ReactNode } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { redirect } from 'next/navigation';
@@ -24,15 +23,16 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect('/onboarding');
   }
 
+  const role = profile.role || 'photographer';
   const fullName = `${profile.first_name} ${profile.last_name}`;
-  const roleTitle = profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : 'User';
+  const roleTitle = role.charAt(0).toUpperCase() + role.slice(1);
   const avatarUrl = profile.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=random';
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-display text-slate-800 dark:text-slate-200">
       
-      {/* Sidebar */}
-      <Sidebar />
+      {/* Sidebar — role determines visible nav items */}
+      <Sidebar role={role} />
 
       {/* Main Content */}
       <div className="flex-1 ml-[240px]">

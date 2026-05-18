@@ -1,6 +1,15 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Pages photographers ARE allowed to access
+const PHOTOGRAPHER_ALLOWED = ['/bookings', '/tasks', '/settings/profile', '/onboarding', '/api']
+
+function isPhotographerAllowed(pathname: string): boolean {
+  return PHOTOGRAPHER_ALLOWED.some(
+    (allowed) => pathname === allowed || pathname.startsWith(`${allowed}/`)
+  )
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -15,7 +24,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -44,6 +53,24 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // --- RBAC Route Protection ---
+  // If user is logged in and on a protected page, check their role
+  if (user && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/auth')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = profile?.role || 'photographer'
+
+    if (role === 'photographer' && !isPhotographerAllowed(request.nextUrl.pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/bookings'
+      return NextResponse.redirect(url)
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
