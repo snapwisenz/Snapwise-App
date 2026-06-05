@@ -15,6 +15,7 @@ export default function SettingsTeamPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('staff');
+  const [inviteIsPhotographer, setInviteIsPhotographer] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
 
   // Edit Modal State
@@ -176,7 +177,7 @@ export default function SettingsTeamPage() {
       const res = await fetch('/api/team/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole })
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole, is_photographer: inviteIsPhotographer })
       });
       const data = await res.json();
       
@@ -186,6 +187,7 @@ export default function SettingsTeamPage() {
       setIsInviteOpen(false);
       setInviteEmail('');
       setInviteRole('staff');
+      setInviteIsPhotographer(false);
       fetchProfiles(); // Refresh the list to show the pending profile
     } catch (err: any) {
       console.error(err);
@@ -344,11 +346,9 @@ export default function SettingsTeamPage() {
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Access Level</label>
                   <div className="space-y-2">
                     {[
-                      { value: 'owner', label: 'Owner', desc: 'Full system control and billing access.', icon: 'shield' },
                       { value: 'admin', label: 'Admin', desc: 'Manage bookings, team, and agency settings.', icon: 'admin_panel_settings' },
                       { value: 'staff', label: 'Staff', desc: 'Access to schedule and assigned bookings.', icon: 'person' },
                     ].map(opt => {
-                      const isDisabled = opt.value === 'owner' && currentUserRole !== 'owner';
                       return (
                         <label
                           key={opt.value}
@@ -356,7 +356,7 @@ export default function SettingsTeamPage() {
                             inviteRole === opt.value
                               ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-sm'
                               : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                          } ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                          }`}
                         >
                           <input
                             type="radio"
@@ -364,7 +364,6 @@ export default function SettingsTeamPage() {
                             value={opt.value}
                             checked={inviteRole === opt.value}
                             onChange={(e) => setInviteRole(e.target.value)}
-                            disabled={isDisabled}
                             className="sr-only"
                           />
                           <span className={`material-icons-outlined text-xl ${inviteRole === opt.value ? 'text-primary' : 'text-slate-400'}`}>{opt.icon}</span>
@@ -381,6 +380,35 @@ export default function SettingsTeamPage() {
                       );
                     })}
                   </div>
+                </div>
+
+                <div className="pt-2">
+                  <label
+                    htmlFor="invite_is_photographer"
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      inviteIsPhotographer
+                        ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
+                      inviteIsPhotographer ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                    }`}>
+                      {inviteIsPhotographer && <span className="material-icons text-white text-[16px]">check</span>}
+                    </div>
+                    <input
+                      type="checkbox"
+                      id="invite_is_photographer"
+                      checked={inviteIsPhotographer}
+                      onChange={(e) => setInviteIsPhotographer(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div>
+                      <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Is a photographer</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Enables route scheduling and territory assignments.</p>
+                    </div>
+                    <span className={`material-icons-outlined ml-auto text-xl ${inviteIsPhotographer ? 'text-primary' : 'text-slate-400'}`}>camera_alt</span>
+                  </label>
                 </div>
               </div>
 

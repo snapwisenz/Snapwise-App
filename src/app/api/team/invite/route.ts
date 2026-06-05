@@ -1,24 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
+import SnapwiseInviteEmail from '@/emails/SnapwiseInviteEmail';
 
-// Placeholder for transactional email integration (e.g. Resend, Sendgrid)
-async function sendBrandedInviteEmail(email: string, role: string, inviteUrl: string) {
-  // TODO: Integrate actual email provider here.
-  console.log(`\n======================================================`);
-  console.log(`MOCK BRANDED EMAIL SENDER`);
-  console.log(`To: ${email}`);
-  console.log(`Subject: You have been invited to join the team!`);
-  console.log(`Body:`);
-  console.log(`Hello,`);
-  console.log(`You have been invited to join the team as a ${role}.`);
-  console.log(`Please click the link below to set up your account:`);
-  console.log(`${inviteUrl}`);
-  console.log(`======================================================\n`);
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 export async function POST(request: Request) {
   try {
-    const { email, role } = await request.json();
+    const { email, role, is_photographer } = await request.json();
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required' }, { status: 400 });
@@ -61,6 +51,7 @@ export async function POST(request: Request) {
         id: user.id,
         email: email,
         role: role,
+        is_photographer: is_photographer || false,
         // Depending on schema, status: 'Pending' might not exist or be needed.
       }, { onConflict: 'id' });
 
@@ -70,7 +61,17 @@ export async function POST(request: Request) {
     }
 
     // 3. Custom Email Integration Hook
-    await sendBrandedInviteEmail(email, role, inviteUrl);
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: 'Snapwise <hello@snapwise.co.nz>',
+      to: email,
+      subject: 'You have been invited to join the Snapwise team!',
+      react: SnapwiseInviteEmail({ inviteUrl, role, isPhotographer: is_photographer || false }),
+    });
+
+    if (emailError) {
+      console.error('Resend email error:', emailError);
+      return NextResponse.json({ error: 'Failed to send invite email' }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
 
