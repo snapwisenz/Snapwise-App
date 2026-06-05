@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { toast } from 'sonner';
 
 const libraries: any[] = ['places'];
 
@@ -21,6 +22,7 @@ export default function SettingsTeamPage() {
   // Edit Modal State
   const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   
   // Edit Form State
   const [editRole, setEditRole] = useState('');
@@ -136,12 +138,12 @@ export default function SettingsTeamPage() {
 
       if (error) throw new Error(error.message);
 
-      alert('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
       closeEditModal();
       fetchProfiles();
     } catch (err) {
       console.error('Error saving profile:', err);
-      alert(`Failed to update profile: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Failed to update profile: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving(false);
     }
@@ -149,23 +151,63 @@ export default function SettingsTeamPage() {
 
   const handleRemoveUser = async () => {
     if (!selectedProfile) return;
-    const confirmed = window.confirm(`Are you sure you want to completely remove ${selectedProfile.first_name || 'this user'}? Their system access will be permanently revoked.`);
+    const confirmed = window.confirm(`Are you sure you want to completely remove ${selectedProfile.first_name || selectedProfile.email || 'this user'}? Their system access will be permanently revoked.`);
     if (!confirmed) return;
     
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/team/remove?id=${selectedProfile.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/team/delete-user?id=${selectedProfile.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to remove user');
       
-      alert('User removed successfully.');
+      toast.success('User removed successfully.');
       closeEditModal();
       fetchProfiles();
     } catch (err: any) {
       console.error(err);
-      alert(`Error removing user: ${err.message}. Make sure SUPABASE_SERVICE_ROLE_KEY is configured in Vercel.`);
+      toast.error(`Error removing user: ${err.message}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleRevokeAccessInline = async (p: any) => {
+    const confirmed = window.confirm(`Are you sure you want to revoke access for ${p.email}? This will permanently delete their account.`);
+    if (!confirmed) return;
+    
+    setActionLoading(p.id);
+    try {
+      const res = await fetch(`/api/team/delete-user?id=${p.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove user');
+      
+      toast.success('User access revoked.');
+      fetchProfiles();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Error revoking access: ${err.message}`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleResendInvite = async (p: any) => {
+    setActionLoading(p.id);
+    try {
+      const res = await fetch('/api/team/resend-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: p.email, role: p.role, is_photographer: p.is_photographer })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to resend invite');
+      
+      toast.success(`Invite resent successfully to ${p.email}`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Failed to resend invite: ${err.message}`);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -183,7 +225,7 @@ export default function SettingsTeamPage() {
       
       if (!res.ok) throw new Error(data.error || 'Failed to send invite');
       
-      alert(`Invitation sent to ${inviteEmail} for role: ${inviteRole.toUpperCase()}`);
+      toast.success(`Invitation sent successfully to ${inviteEmail}`);
       setIsInviteOpen(false);
       setInviteEmail('');
       setInviteRole('staff');
@@ -191,7 +233,7 @@ export default function SettingsTeamPage() {
       fetchProfiles(); // Refresh the list to show the pending profile
     } catch (err: any) {
       console.error(err);
-      alert(`Failed to send invite: ${err.message}`);
+      toast.error(`Failed to send invite: ${err.message}`);
     } finally {
       setIsInviting(false);
     }
@@ -249,10 +291,10 @@ export default function SettingsTeamPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                            {p.first_name ? p.first_name[0] : (p.full_name ? p.full_name[0] : '?')}
+                            {p.first_name ? p.first_name[0] : (p.email ? p.email[0].toUpperCase() : '?')}
                           </div>
                           <div className="font-bold text-slate-900 dark:text-slate-100">
-                            {p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : (p.full_name || 'Unnamed')}
+                            {p.first_name && p.last_name ? `${p.first_name} ${p.last_name}` : (p.email || p.full_name || 'Unnamed')}
                           </div>
                         </div>
                       </td>
@@ -295,12 +337,32 @@ export default function SettingsTeamPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => openEditModal(p)}
-                          className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider bg-primary/5 hover:bg-primary/10 px-3 py-2 rounded-lg"
-                        >
-                          Edit
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          {(!p.first_name || !p.last_name) && (
+                            <button 
+                              onClick={() => handleResendInvite(p)}
+                              disabled={actionLoading === p.id}
+                              className="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors uppercase tracking-wider bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40 px-3 py-2 rounded-lg disabled:opacity-50"
+                            >
+                              Resend
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => openEditModal(p)}
+                            className="text-xs font-bold text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors uppercase tracking-wider bg-primary/5 hover:bg-primary/10 px-3 py-2 rounded-lg"
+                          >
+                            Edit
+                          </button>
+                          {(!p.first_name || !p.last_name) && (
+                            <button 
+                              onClick={() => handleRevokeAccessInline(p)}
+                              disabled={actionLoading === p.id}
+                              className="text-xs font-bold text-error hover:text-error-600 transition-colors uppercase tracking-wider bg-error/5 hover:bg-error/10 px-3 py-2 rounded-lg disabled:opacity-50"
+                            >
+                              Revoke
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
