@@ -7,7 +7,7 @@ import SnapwiseInviteEmail from '@/emails/SnapwiseInviteEmail';
 
 export async function POST(request: Request) {
   try {
-    const { email, role, is_photographer, agency_id } = await request.json();
+    const { email, role, is_photographer, tenancy_id } = await request.json();
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required' }, { status: 400 });
@@ -45,21 +45,27 @@ export async function POST(request: Request) {
     }
 
     // 2. Profile Creation
-    // Update the profile created by the database trigger to inject custom flags and agency
-    const { error: profileError } = await supabaseAdmin
+    // Update the profile created by the database trigger to inject custom flags and tenancy
+    const { data: updatedProfile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
         email: user.email || email,
         role: role,
         is_photographer: is_photographer || false,
-        agency_id: agency_id || null
+        tenancy_id: tenancy_id || null
       })
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .select();
 
     if (profileError) {
        console.error("Profile insert error:", profileError);
        // We explicitly throw here so the frontend knows the DB insertion failed instead of silently ignoring it.
        return NextResponse.json({ error: `Failed to create profile record: ${profileError.message}` }, { status: 500 });
+    }
+
+    if (!updatedProfile || updatedProfile.length === 0) {
+       console.error("Zero rows updated. Trigger may have failed to create the profile.");
+       return NextResponse.json({ error: `Sync failed: The database trigger did not create the profile in time.` }, { status: 500 });
     }
 
     // 3. Custom Email Integration Hook

@@ -11,7 +11,7 @@ export default function SettingsTeamPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
-  const [currentAgencyId, setCurrentAgencyId] = useState<string | null>(null);
+  const [currentTenancyId, setCurrentTenancyId] = useState<string | null>(null);
   
   // Invite Modal State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -48,12 +48,12 @@ export default function SettingsTeamPage() {
       if (user) {
         const { data: myProfile } = await supabase
           .from('profiles')
-          .select('role, agency_id')
+          .select('role, tenancy_id')
           .eq('id', user.id)
           .single();
         if (myProfile) {
           setCurrentUserRole(myProfile.role || '');
-          if (myProfile.agency_id) setCurrentAgencyId(myProfile.agency_id);
+          if (myProfile.tenancy_id) setCurrentTenancyId(myProfile.tenancy_id);
         }
       }
       fetchProfiles();
@@ -227,7 +227,7 @@ export default function SettingsTeamPage() {
           email: inviteEmail, 
           role: inviteRole, 
           is_photographer: inviteIsPhotographer,
-          agency_id: currentAgencyId 
+          tenancy_id: currentTenancyId 
         })
       });
       const data = await res.json();
