@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import SnapwiseInviteEmail from '@/emails/SnapwiseInviteEmail';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 
 export async function POST(request: Request) {
@@ -16,14 +15,17 @@ export async function POST(request: Request) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const resendApiKey = process.env.RESEND_API_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Server misconfiguration: Service role key missing' }, { status: 500 });
+    if (!supabaseUrl || !supabaseKey || !resendApiKey) {
+      return NextResponse.json({ error: 'Server misconfiguration: Service role key or Resend key missing' }, { status: 500 });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
+    
+    const resend = new Resend(resendApiKey);
 
     // 1. Generate the invite link silently without triggering default emails
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
