@@ -45,16 +45,16 @@ export async function POST(request: Request) {
     }
 
     // 2. Profile Creation
-    // Explicit insert to ensure custom flags are saved and to catch any DB errors (e.g. missing tenancy_id)
+    // Update the profile created by the database trigger to inject custom flags and tenancy
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: user.id,
+      .update({
         email: user.email || email,
         role: role,
         is_photographer: is_photographer || false,
         tenancy_id: tenancy_id || null
-      });
+      })
+      .eq('id', user.id);
 
     if (profileError) {
        console.error("Profile insert error:", profileError);
