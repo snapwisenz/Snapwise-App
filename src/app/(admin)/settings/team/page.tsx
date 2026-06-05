@@ -313,7 +313,7 @@ export default function SettingsTeamPage() {
       {isInviteOpen && (
         <div className="fixed inset-0 z-[60] overflow-hidden flex justify-end">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsInviteOpen(false)}></div>
-          <div className="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col relative animate-in slide-in-from-right duration-300">
+          <div className="w-full sm:w-[400px] shrink-0 bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col relative animate-in slide-in-from-right duration-300">
             <div className="px-6 py-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Invite Team Member</h2>
               <button onClick={() => setIsInviteOpen(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -409,7 +409,7 @@ export default function SettingsTeamPage() {
       {selectedProfile && (
         <div className="fixed inset-0 z-[60] overflow-hidden flex justify-end">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeEditModal}></div>
-          <div className="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col relative animate-in slide-in-from-right duration-300">
+          <div className="w-full sm:w-[400px] shrink-0 bg-white dark:bg-slate-900 shadow-2xl h-full flex flex-col relative animate-in slide-in-from-right duration-300">
             <div className="px-6 py-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Edit Staff Profile</h2>
               <button onClick={closeEditModal} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
