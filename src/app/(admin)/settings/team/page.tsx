@@ -56,10 +56,17 @@ export default function SettingsTeamPage() {
           if (myProfile.tenancy_id) setCurrentTenancyId(myProfile.tenancy_id);
         }
       }
-      fetchProfiles();
+      // Rely on the dependency array or call fetchProfiles separately?
+      // Since currentTenancyId is state, we should trigger fetchProfiles in a separate useEffect.
     }
     init();
   }, [supabase]);
+
+  useEffect(() => {
+    if (currentTenancyId) {
+      fetchProfiles();
+    }
+  }, [currentTenancyId]);
 
   async function fetchProfiles() {
     setLoading(true);
@@ -67,6 +74,7 @@ export default function SettingsTeamPage() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('tenancy_id', currentTenancyId)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
