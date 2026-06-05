@@ -3,6 +3,7 @@ import Sidebar from '@/components/Sidebar';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import UserNav from '@/components/UserNav';
+import { headers } from 'next/headers';
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
@@ -24,6 +25,19 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   }
 
   const role = profile.role || 'staff';
+
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '';
+  
+  const STAFF_ALLOWED = ['/bookings', '/tasks', '/settings/profile', '/onboarding', '/api'];
+  const isStaffAllowed = STAFF_ALLOWED.some(
+    (allowed) => pathname === allowed || pathname.startsWith(`${allowed}/`)
+  );
+
+  if (role === 'staff' && !isStaffAllowed) {
+    redirect('/bookings');
+  }
+
   const fullName = `${profile.first_name} ${profile.last_name}`;
   const roleTitle = role.charAt(0).toUpperCase() + role.slice(1);
   const avatarUrl = profile.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=random';
