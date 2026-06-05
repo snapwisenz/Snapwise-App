@@ -11,6 +11,7 @@ export default function SettingsTeamPage() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const [currentTenancyId, setCurrentTenancyId] = useState<string | null>(null);
   
   // Invite Modal State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -47,10 +48,13 @@ export default function SettingsTeamPage() {
       if (user) {
         const { data: myProfile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, tenancy_id')
           .eq('id', user.id)
           .single();
-        if (myProfile) setCurrentUserRole(myProfile.role || '');
+        if (myProfile) {
+          setCurrentUserRole(myProfile.role || '');
+          if (myProfile.tenancy_id) setCurrentTenancyId(myProfile.tenancy_id);
+        }
       }
       fetchProfiles();
     }
@@ -219,7 +223,12 @@ export default function SettingsTeamPage() {
       const res = await fetch('/api/team/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole, is_photographer: inviteIsPhotographer })
+        body: JSON.stringify({ 
+          email: inviteEmail, 
+          role: inviteRole, 
+          is_photographer: inviteIsPhotographer,
+          tenancy_id: currentTenancyId 
+        })
       });
       const data = await res.json();
       

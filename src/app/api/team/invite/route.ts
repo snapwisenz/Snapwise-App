@@ -7,7 +7,7 @@ import SnapwiseInviteEmail from '@/emails/SnapwiseInviteEmail';
 
 export async function POST(request: Request) {
   try {
-    const { email, role, is_photographer } = await request.json();
+    const { email, role, is_photographer, tenancy_id } = await request.json();
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required' }, { status: 400 });
@@ -44,22 +44,22 @@ export async function POST(request: Request) {
        return NextResponse.json({ error: 'Failed to generate invite link' }, { status: 500 });
     }
 
-    // 2. Profile Creation (if it doesn't already exist from a trigger)
-    // Upsert into profiles based on user id, set email and role, status can be implicitly handled or if there is a column.
-    // If there is an existing trigger, it might have created the profile already. We just need to update it with the role.
+    // 2. Profile Creation
+    // Explicit insert to ensure custom flags are saved and to catch any DB errors (e.g. missing tenancy_id)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert({
+      .insert({
         id: user.id,
-        email: email,
+        email: user.email || email,
         role: role,
         is_photographer: is_photographer || false,
-        // Depending on schema, status: 'Pending' might not exist or be needed.
-      }, { onConflict: 'id' });
+        tenancy_id: tenancy_id || null
+      });
 
     if (profileError) {
-       // Just log, the user is created and link generated.
-       console.error("Profile update error:", profileError);
+       console.error("Profile insert error:", profileError);
+       // We explicitly throw here so the frontend knows the DB insertion failed instead of silently ignoring it.
+       return NextResponse.json({ error: `Failed to create profile record: ${profileError.message}` }, { status: 500 });
     }
 
     // 3. Custom Email Integration Hook
