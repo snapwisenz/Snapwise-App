@@ -12,6 +12,7 @@
   "dependencies": {
     "@radix-ui/react-popover": "^1.1.15",
     "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.8",
     "@react-google-maps/api": "^2.20.8",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
