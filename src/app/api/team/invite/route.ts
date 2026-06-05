@@ -7,7 +7,7 @@ import SnapwiseInviteEmail from '@/emails/SnapwiseInviteEmail';
 
 export async function POST(request: Request) {
   try {
-    const { email, role, is_photographer, tenancy_id } = await request.json();
+    const { email, role, is_photographer, agency_id } = await request.json();
 
     if (!email || !role) {
       return NextResponse.json({ error: 'Email and role are required' }, { status: 400 });
@@ -45,14 +45,14 @@ export async function POST(request: Request) {
     }
 
     // 2. Profile Creation
-    // Update the profile created by the database trigger to inject custom flags and tenancy
+    // Update the profile created by the database trigger to inject custom flags and agency
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
         email: user.email || email,
         role: role,
         is_photographer: is_photographer || false,
-        tenancy_id: tenancy_id || null
+        agency_id: agency_id || null
       })
       .eq('id', user.id);
 
