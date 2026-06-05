@@ -12,14 +12,19 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   };
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  try {
+    const { error } = await supabase.auth.signInWithPassword(data);
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    revalidatePath('/', 'layout');
+    redirect('/dashboard');
+  } catch (err: any) {
+    console.error('Login exception:', err);
+    return { error: err?.message || 'Network error: Could not reach the authentication server. Your database might be paused or offline.' };
   }
-
-  revalidatePath('/', 'layout');
-  redirect('/dashboard');
 }
 
 export async function signup(formData: FormData) {
@@ -30,12 +35,17 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   };
 
-  const { error } = await supabase.auth.signUp(data);
+  try {
+    const { error } = await supabase.auth.signUp(data);
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    revalidatePath('/', 'layout');
+    redirect('/dashboard');
+  } catch (err: any) {
+    console.error('Signup exception:', err);
+    return { error: err?.message || 'Network error: Could not reach the authentication server. Your database might be paused or offline.' };
   }
-
-  revalidatePath('/', 'layout');
-  redirect('/dashboard');
 }
